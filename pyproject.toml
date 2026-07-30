@@ -11,6 +11,7 @@ requires-python = ">=3.13,<3.14"
 dependencies = [
     "langgraph",
     "pydantic>=2,<3",
+    "PyYAML>=6,<7",
 ]
 
 [dependency-groups]
@@ -22,4 +23,4 @@ dev = [
 code-migration-agent = "agent.cli:main"
 
 [tool.setuptools]
-packages = ["agent", "models", "tools"]
+packages = ["agent", "knowledge", "models", "tools"]

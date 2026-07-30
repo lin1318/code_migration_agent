@@ -1,0 +1,132 @@
+rules:
+  - rule_id: gin.default
+    source_package: github.com/gin-gonic/gin
+    source_symbol: Default
+    target_package: github.com/cloudwego/hertz/pkg/app/server
+    target_symbol: Default
+    migration_category: server_initialization
+    confidence: exact
+    required_imports:
+      - github.com/cloudwego/hertz/pkg/app/server
+    notes: Hertz server.Default creates an engine with its default middleware.
+
+  - rule_id: gin.new
+    source_package: github.com/gin-gonic/gin
+    source_symbol: New
+    target_package: github.com/cloudwego/hertz/pkg/app/server
+    target_symbol: New
+    migration_category: server_initialization
+    confidence: exact
+    required_imports:
+      - github.com/cloudwego/hertz/pkg/app/server
+    notes: Hertz server.New creates an engine without installing default middleware.
+
+  - rule_id: gin.context
+    source_package: github.com/gin-gonic/gin
+    source_symbol: Context
+    target_package: github.com/cloudwego/hertz/pkg/app
+    target_symbol: RequestContext
+    migration_category: context_type
+    confidence: review
+    required_imports:
+      - context
+      - github.com/cloudwego/hertz/pkg/app
+    notes: Hertz handlers also receive a standard context.Context parameter.
+
+  - rule_id: gin.handler_func
+    source_package: github.com/gin-gonic/gin
+    source_symbol: HandlerFunc
+    target_package: github.com/cloudwego/hertz/pkg/app
+    target_symbol: HandlerFunc
+    migration_category: handler_type
+    confidence: review
+    required_imports:
+      - context
+      - github.com/cloudwego/hertz/pkg/app
+    notes: Adapt handler signatures to func(context.Context, *app.RequestContext).
+
+  - rule_id: gin.context.param
+    source_package: github.com/gin-gonic/gin
+    source_symbol: (*Context).Param
+    target_package: github.com/cloudwego/hertz/pkg/app
+    target_symbol: (*RequestContext).Param
+    migration_category: request_access
+    confidence: exact
+    required_imports:
+      - github.com/cloudwego/hertz/pkg/app
+    notes: The path-parameter method has equivalent call semantics.
+
+  - rule_id: gin.context.query
+    source_package: github.com/gin-gonic/gin
+    source_symbol: (*Context).Query
+    target_package: github.com/cloudwego/hertz/pkg/app
+    target_symbol: (*RequestContext).Query
+    migration_category: request_access
+    confidence: exact
+    required_imports:
+      - github.com/cloudwego/hertz/pkg/app
+    notes: The query-parameter method has equivalent call semantics.
+
+  - rule_id: gin.context.json
+    source_package: github.com/gin-gonic/gin
+    source_symbol: (*Context).JSON
+    target_package: github.com/cloudwego/hertz/pkg/app
+    target_symbol: (*RequestContext).JSON
+    migration_category: response_rendering
+    confidence: exact
+    required_imports:
+      - github.com/cloudwego/hertz/pkg/app
+    notes: Preserve the status code and response object arguments.
+
+  - rule_id: gin.h
+    source_package: github.com/gin-gonic/gin
+    source_symbol: H
+    target_package: github.com/cloudwego/hertz/pkg/common/utils
+    target_symbol: H
+    migration_category: data_structure
+    confidence: exact
+    required_imports:
+      - github.com/cloudwego/hertz/pkg/common/utils
+    notes: Replace gin.H composite literals with utils.H.
+
+  - rule_id: gin.context.should_bind_json
+    source_package: github.com/gin-gonic/gin
+    source_symbol: (*Context).ShouldBindJSON
+    target_package: github.com/cloudwego/hertz/pkg/app
+    target_symbol: (*RequestContext).BindAndValidate
+    migration_category: data_binding
+    confidence: review
+    required_imports:
+      - github.com/cloudwego/hertz/pkg/app
+    notes: Review binding tags and validation behavior; Hertz binding may inspect more than JSON.
+
+  - rule_id: gin.context.abort_with_status_json
+    source_package: github.com/gin-gonic/gin
+    source_symbol: (*Context).AbortWithStatusJSON
+    target_package: github.com/cloudwego/hertz/pkg/app
+    target_operations:
+      - operation: call
+        symbol: (*RequestContext).Abort
+      - operation: call
+        symbol: (*RequestContext).JSON
+    migration_category: response_rendering
+    confidence: review
+    required_imports:
+      - github.com/cloudwego/hertz/pkg/app
+    notes: Abort the Hertz chain, then write the JSON response with the original status and object.
+
+  - rule_id: gin.context.next
+    source_package: github.com/gin-gonic/gin
+    source_symbol: (*Context).Next
+    target_package: github.com/cloudwego/hertz/pkg/app
+    target_operations:
+      - operation: replace_call
+        symbol: (*RequestContext).Next
+      - operation: add_argument
+        value: context.Context
+    migration_category: middleware_control
+    confidence: review
+    required_imports:
+      - context
+      - github.com/cloudwego/hertz/pkg/app
+    notes: Pass the standard context.Context handler parameter to RequestContext.Next.

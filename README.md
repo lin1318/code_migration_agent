@@ -1,7 +1,7 @@
 # Code Migration Agent
 
-Stage 4 adds a typed Python adapter for the semantic Go repository analyzer.
-LLM, LangGraph, and migration execution are not connected yet.
+Stage 5 adds a validated YAML registry of Gin-to-Hertz migration rules.
+Source-code modification, LLM, and LangGraph execution are not connected yet.
 
 ## Requirements
 
