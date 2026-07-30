@@ -22,10 +22,8 @@ def test_workflow_matches_inspect_and_does_not_modify_fixture(
 ) -> None:
     repository = (
         PROJECT_ROOT
-        / "go-analyzer"
-        / "analyzer"
-        / "testdata"
-        / "gin-positive"
+        / "examples"
+        / "go-gin-example"
     )
     before = snapshot(repository)
     inspect_output = tmp_path / "inspect.json"

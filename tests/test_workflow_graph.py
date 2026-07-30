@@ -1,3 +1,4 @@
+from contextlib import ExitStack
 from pathlib import Path
 from unittest.mock import patch
 
@@ -6,6 +7,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 
 from knowledge.registry import load_rule_registry
 from models.analyzer import AnalyzerResult, PackageLoadingError
+from models.workflow import WorkflowError
 from tools.go_analyzer import (
     AnalyzerExecution,
     AnalyzerInvalidJSONError,
@@ -15,6 +17,7 @@ from tools.go_analyzer import (
     GoPackageLoadingError,
 )
 from tools.migration_planner import build_migration_inventory
+from workflow import nodes
 from workflow.graph import create_inspection_workflow
 
 
@@ -229,6 +232,207 @@ def test_checkpointed_output_is_deterministic(
         first["final_report"].model_dump(mode="json")
         == second["final_report"].model_dump(mode="json")
     )
+
+
+@patch("workflow.nodes.run_go_analyzer")
+def test_individual_stage_state_contents(mock_analyzer, tmp_path: Path) -> None:
+    analysis = fixture_analysis()
+    mock_analyzer.return_value = execution(analysis)
+    state = {
+        "repository_path": str(tmp_path),
+        "rule_registry_path": str(RULES),
+        "analyzer_timeout": 5.0,
+    }
+
+    state.update(nodes.validate_input(state))
+    assert state["completed_stages"] == ["validate_input"]
+    assert state["errors"] == []
+    assert Path(state["repository_path"]).is_absolute()
+
+    state.update(nodes.inspect_repository(state))
+    assert state["analyzer_result"] == analysis
+    assert state["completed_stages"][-1] == "inspect_repository"
+
+    state.update(nodes.load_migration_rules(state))
+    assert state["migration_rules"]
+    assert state["rule_registry_metadata"].rule_count == len(
+        state["migration_rules"]
+    )
+    assert state["completed_stages"][-1] == "load_migration_rules"
+
+    state.update(nodes.build_inventory(state))
+    assert state["migration_inventory"].discovered_gin_usages
+    assert (
+        state["repository_summary"]
+        == state["migration_inventory"].repository_summary
+    )
+    assert state["completed_stages"][-1] == "build_inventory"
+
+    state.update(nodes.validate_inventory(state))
+    assert state["completed_stages"][-1] == "validate_inventory"
+
+    state.update(nodes.build_plan(state))
+    assert len(state["migration_plan"]) == 10
+    assert state["completed_stages"][-1] == "build_plan"
+
+    state.update(nodes.validate_plan(state))
+    assert state["completed_stages"][-1] == "validate_plan"
+
+    state.update(nodes.generate_report(state))
+    assert state["completed_stages"][-1] == "generate_report"
+    assert state["final_status"] == "success"
+    assert state["final_report"].final_status == "success"
+
+
+@pytest.mark.parametrize(
+    "failed_stage",
+    [
+        "validate_input",
+        "inspect_repository",
+        "load_migration_rules",
+        "build_inventory",
+        "validate_inventory",
+        "build_plan",
+        "validate_plan",
+        "generate_report",
+    ],
+)
+def test_failure_at_any_stage_routes_to_handler_and_stops(
+    failed_stage: str,
+    tmp_path: Path,
+) -> None:
+    stage_order = [
+        "validate_input",
+        "inspect_repository",
+        "load_migration_rules",
+        "build_inventory",
+        "validate_inventory",
+        "build_plan",
+        "validate_plan",
+        "generate_report",
+    ]
+    called: list[str] = []
+
+    def stage_node(stage: str):
+        def run(state):
+            called.append(stage)
+            if stage == failed_stage:
+                return {
+                    "current_stage": stage,
+                    "errors": [
+                        WorkflowError(
+                            stage=stage,
+                            error_type="ControlledFailure",
+                            message=f"{stage} failed",
+                            diagnostics={"marker": stage},
+                        )
+                    ],
+                }
+            return {
+                "current_stage": stage,
+                "completed_stages": [
+                    *state.get("completed_stages", []),
+                    stage,
+                ],
+                "errors": [],
+                "warnings": state.get("warnings", []),
+            }
+
+        return run
+
+    with ExitStack() as stack:
+        for stage in stage_order:
+            stack.enter_context(
+                patch(
+                    f"workflow.graph.nodes.{stage}",
+                    side_effect=stage_node(stage),
+                )
+            )
+        graph = create_inspection_workflow()
+        state = graph.invoke(
+            {
+                "repository_path": str(tmp_path),
+                "rule_registry_path": str(RULES),
+                "analyzer_timeout": 5.0,
+            }
+        )
+
+    failed_index = stage_order.index(failed_stage)
+    assert called == stage_order[: failed_index + 1]
+    assert state["current_stage"] == "handle_failure"
+    assert state["final_status"] == "failed"
+    assert state.get("completed_stages", []) == stage_order[:failed_index]
+    error = state["errors"][0]
+    assert error.stage == failed_stage
+    assert error.error_type == "ControlledFailure"
+    assert error.message == f"{failed_stage} failed"
+    assert error.diagnostics == {"marker": failed_stage}
+
+
+@patch("workflow.nodes.run_go_analyzer")
+def test_analyzer_timeout_preserves_diagnostics(
+    mock_analyzer,
+    tmp_path: Path,
+) -> None:
+    mock_analyzer.side_effect = AnalyzerTimeoutError(
+        7.5,
+        "partial analyzer output",
+        "timeout diagnostic",
+    )
+
+    state = invoke(tmp_path)
+
+    error = state["errors"][0]
+    assert error.stage == "inspect_repository"
+    assert error.error_type == "AnalyzerTimeoutError"
+    assert "timed out" in error.message
+    assert error.diagnostics == {
+        "stdout": "partial analyzer output",
+        "stderr": "timeout diagnostic",
+        "timeout": 7.5,
+    }
+
+
+@patch("workflow.nodes.run_go_analyzer")
+def test_memory_checkpointer_history_and_thread_isolation(
+    mock_analyzer,
+    tmp_path: Path,
+) -> None:
+    mock_analyzer.return_value = execution()
+    saver = InMemorySaver()
+    graph = create_inspection_workflow(saver)
+    first_repo = tmp_path / "first"
+    second_repo = tmp_path / "second"
+    first_repo.mkdir()
+    second_repo.mkdir()
+    first_config = {"configurable": {"thread_id": "thread-one"}}
+    second_config = {"configurable": {"thread_id": "thread-two"}}
+    inputs = {
+        "rule_registry_path": str(RULES),
+        "analyzer_timeout": 5.0,
+    }
+
+    with pytest.raises(ValueError, match="thread_id"):
+        graph.invoke({"repository_path": str(first_repo), **inputs})
+
+    first = graph.invoke(
+        {"repository_path": str(first_repo), **inputs},
+        config=first_config,
+    )
+    second = graph.invoke(
+        {"repository_path": str(second_repo), **inputs},
+        config=second_config,
+    )
+    first_history = list(graph.get_state_history(first_config))
+    second_history = list(graph.get_state_history(second_config))
+
+    assert len(first_history) > 2
+    assert len(second_history) > 2
+    assert first_history[0].values["final_status"] == "success"
+    assert second_history[0].values["final_status"] == "success"
+    assert first_history[0].values["repository_path"] == str(first_repo.resolve())
+    assert second_history[0].values["repository_path"] == str(second_repo.resolve())
+    assert first["repository_path"] != second["repository_path"]
 
 
 @patch("workflow.nodes.packages_containing_gin_usages", wraps=None)
