@@ -17,6 +17,7 @@ class MigrationConfidence(StrEnum):
 
 class MigrationCategory(StrEnum):
     SERVER_INITIALIZATION = "server_initialization"
+    ROUTING = "routing"
     CONTEXT_TYPE = "context_type"
     HANDLER_TYPE = "handler_type"
     REQUEST_ACCESS = "request_access"

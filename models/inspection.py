@@ -2,8 +2,8 @@
 
 from pydantic import Field
 
-from models.analyzer import GinUsage
 from models.migration_plan import (
+    InventoryUsage,
     MigrationInventory,
     MigrationTask,
     PlanModel,
@@ -17,7 +17,7 @@ class RepositoryInspection(PlanModel):
     repository_path: str
     repository_summary: RepositorySummary
     packages_containing_gin_usages: list[str]
-    discovered_gin_usages: list[GinUsage]
+    discovered_gin_usages: list[InventoryUsage]
     exact_migrations: list[PlannedMigration]
     migrations_requiring_review: list[PlannedMigration]
     unsupported_usages: list[UnsupportedUsage]

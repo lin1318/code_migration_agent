@@ -36,7 +36,7 @@ def test_loads_production_rules_and_performs_exact_lookup() -> None:
 
     registry = load_rule_registry(knowledge)
 
-    assert len(registry) == 11
+    assert len(registry) == 23
     rule = registry.lookup("github.com/gin-gonic/gin", "(*Context).JSON")
     assert rule is not None
     assert rule.rule_id == "gin.context.json"
@@ -47,6 +47,30 @@ def test_loads_production_rules_and_performs_exact_lookup() -> None:
         )
         == rule
     )
+
+
+@pytest.mark.parametrize(
+    "source_symbol",
+    [
+        "(*Engine).GET",
+        "(*Engine).POST",
+        "(*Engine).PUT",
+        "(*Engine).DELETE",
+        "(*Engine).Group",
+        "(*Engine).Use",
+        "(*RouterGroup).GET",
+        "(*RouterGroup).POST",
+        "(*RouterGroup).PUT",
+        "(*RouterGroup).DELETE",
+        "(*RouterGroup).Group",
+        "(*RouterGroup).Use",
+    ],
+)
+def test_registry_covers_analyzed_routing_symbols(source_symbol: str) -> None:
+    knowledge = Path(__file__).resolve().parents[1] / "knowledge"
+    registry = load_rule_registry(knowledge)
+
+    assert registry.lookup("github.com/gin-gonic/gin", source_symbol) is not None
 
 
 def test_lookup_requires_exact_package_and_symbol(tmp_path: Path) -> None:

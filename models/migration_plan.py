@@ -1,6 +1,7 @@
 """Validated output models for deterministic migration planning."""
 
 from enum import StrEnum
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -25,11 +26,17 @@ class RepositorySummary(PlanModel):
     import_count: int = Field(ge=0)
     imports: list[str]
     gin_usage_count: int = Field(ge=0)
+    gin_import_count: int = Field(ge=0)
+    gin_api_usage_count: int = Field(ge=0)
     package_loading_error_count: int = Field(ge=0)
 
 
+class InventoryUsage(GinUsage):
+    usage_id: str
+
+
 class PlannedMigration(PlanModel):
-    usage: GinUsage
+    usage: InventoryUsage
     rule_id: str
     target_package: str
     target_symbol: str | None
@@ -41,7 +48,7 @@ class PlannedMigration(PlanModel):
 
 
 class UnsupportedUsage(PlanModel):
-    usage: GinUsage
+    usage: InventoryUsage
     rule_id: str | None = None
     reason: str
 
@@ -59,11 +66,30 @@ class MigrationPhase(StrEnum):
     FINAL_VERIFICATION = "final_verification"
 
 
+class MigrationTaskKind(StrEnum):
+    PRIMARY = "primary"
+    DERIVED = "derived"
+    WORKFLOW = "workflow"
+
+
+class DerivedTaskInformation(PlanModel):
+    kind: Literal["import_cleanup"]
+    file: str
+    derived_from_usage_ids: list[str]
+    remove_imports: list[str]
+    add_imports: list[str]
+    notes: str
+
+
 class MigrationTask(PlanModel):
     order: int = Field(ge=1, le=10)
     phase: MigrationPhase
+    task_kind: MigrationTaskKind
     description: str
     usage_count: int = Field(ge=0)
+    direct_usage_ids: list[str]
+    derived_from_usage_ids: list[str]
+    derived_information: list[DerivedTaskInformation]
     source_symbols: list[str]
     rule_ids: list[str]
     required_imports: list[str]
@@ -71,7 +97,7 @@ class MigrationTask(PlanModel):
 
 class MigrationInventory(PlanModel):
     repository_summary: RepositorySummary
-    discovered_gin_usages: list[GinUsage]
+    discovered_gin_usages: list[InventoryUsage]
     exact_migrations: list[PlannedMigration]
     migrations_requiring_review: list[PlannedMigration]
     unsupported_usages: list[UnsupportedUsage]

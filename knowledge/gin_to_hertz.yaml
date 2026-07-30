@@ -21,6 +21,134 @@ rules:
       - github.com/cloudwego/hertz/pkg/app/server
     notes: Hertz server.New creates an engine without installing default middleware.
 
+  - rule_id: gin.engine.get
+    source_package: github.com/gin-gonic/gin
+    source_symbol: (*Engine).GET
+    target_package: github.com/cloudwego/hertz/pkg/app/server
+    target_symbol: (*Hertz).GET
+    migration_category: routing
+    confidence: exact
+    required_imports:
+      - github.com/cloudwego/hertz/pkg/app/server
+    notes: Preserve the route path and handlers after adapting handler signatures.
+
+  - rule_id: gin.engine.post
+    source_package: github.com/gin-gonic/gin
+    source_symbol: (*Engine).POST
+    target_package: github.com/cloudwego/hertz/pkg/app/server
+    target_symbol: (*Hertz).POST
+    migration_category: routing
+    confidence: exact
+    required_imports:
+      - github.com/cloudwego/hertz/pkg/app/server
+    notes: Preserve the route path and handlers after adapting handler signatures.
+
+  - rule_id: gin.engine.put
+    source_package: github.com/gin-gonic/gin
+    source_symbol: (*Engine).PUT
+    target_package: github.com/cloudwego/hertz/pkg/app/server
+    target_symbol: (*Hertz).PUT
+    migration_category: routing
+    confidence: exact
+    required_imports:
+      - github.com/cloudwego/hertz/pkg/app/server
+    notes: Preserve the route path and handlers after adapting handler signatures.
+
+  - rule_id: gin.engine.delete
+    source_package: github.com/gin-gonic/gin
+    source_symbol: (*Engine).DELETE
+    target_package: github.com/cloudwego/hertz/pkg/app/server
+    target_symbol: (*Hertz).DELETE
+    migration_category: routing
+    confidence: exact
+    required_imports:
+      - github.com/cloudwego/hertz/pkg/app/server
+    notes: Preserve the route path and handlers after adapting handler signatures.
+
+  - rule_id: gin.engine.group
+    source_package: github.com/gin-gonic/gin
+    source_symbol: (*Engine).Group
+    target_package: github.com/cloudwego/hertz/pkg/app/server
+    target_symbol: (*Hertz).Group
+    migration_category: routing
+    confidence: exact
+    required_imports:
+      - github.com/cloudwego/hertz/pkg/app/server
+    notes: Hertz returns a route.RouterGroup with the same path-prefix behavior.
+
+  - rule_id: gin.engine.use
+    source_package: github.com/gin-gonic/gin
+    source_symbol: (*Engine).Use
+    target_package: github.com/cloudwego/hertz/pkg/app/server
+    target_symbol: (*Hertz).Use
+    migration_category: middleware_control
+    confidence: review
+    required_imports:
+      - github.com/cloudwego/hertz/pkg/app
+      - github.com/cloudwego/hertz/pkg/app/server
+    notes: Adapt every middleware to the Hertz app.HandlerFunc signature before registration.
+
+  - rule_id: gin.router_group.get
+    source_package: github.com/gin-gonic/gin
+    source_symbol: (*RouterGroup).GET
+    target_package: github.com/cloudwego/hertz/pkg/route
+    target_symbol: (*RouterGroup).GET
+    migration_category: routing
+    confidence: exact
+    required_imports: []
+    notes: Preserve the route path and handlers after adapting handler signatures.
+
+  - rule_id: gin.router_group.post
+    source_package: github.com/gin-gonic/gin
+    source_symbol: (*RouterGroup).POST
+    target_package: github.com/cloudwego/hertz/pkg/route
+    target_symbol: (*RouterGroup).POST
+    migration_category: routing
+    confidence: exact
+    required_imports: []
+    notes: Preserve the route path and handlers after adapting handler signatures.
+
+  - rule_id: gin.router_group.put
+    source_package: github.com/gin-gonic/gin
+    source_symbol: (*RouterGroup).PUT
+    target_package: github.com/cloudwego/hertz/pkg/route
+    target_symbol: (*RouterGroup).PUT
+    migration_category: routing
+    confidence: exact
+    required_imports: []
+    notes: Preserve the route path and handlers after adapting handler signatures.
+
+  - rule_id: gin.router_group.delete
+    source_package: github.com/gin-gonic/gin
+    source_symbol: (*RouterGroup).DELETE
+    target_package: github.com/cloudwego/hertz/pkg/route
+    target_symbol: (*RouterGroup).DELETE
+    migration_category: routing
+    confidence: exact
+    required_imports: []
+    notes: Preserve the route path and handlers after adapting handler signatures.
+
+  - rule_id: gin.router_group.group
+    source_package: github.com/gin-gonic/gin
+    source_symbol: (*RouterGroup).Group
+    target_package: github.com/cloudwego/hertz/pkg/route
+    target_symbol: (*RouterGroup).Group
+    migration_category: routing
+    confidence: exact
+    required_imports: []
+    notes: Preserve the nested route prefix and inherited handler chain.
+
+  - rule_id: gin.router_group.use
+    source_package: github.com/gin-gonic/gin
+    source_symbol: (*RouterGroup).Use
+    target_package: github.com/cloudwego/hertz/pkg/route
+    target_symbol: (*RouterGroup).Use
+    migration_category: middleware_control
+    confidence: review
+    required_imports:
+      - github.com/cloudwego/hertz/pkg/app
+    notes: Adapt every group middleware to the Hertz app.HandlerFunc signature before registration.
+
   - rule_id: gin.context
     source_package: github.com/gin-gonic/gin
     source_symbol: Context

@@ -54,7 +54,26 @@ def test_inspect_fixture_is_deterministic_and_read_only(tmp_path: Path) -> None:
             "unmatched_usages",
         )
     )
-    assert classified == len(first["discovered_gin_usages"])
+    api_usages = [
+        usage
+        for usage in first["discovered_gin_usages"]
+        if usage["kind"] != "gin_import"
+    ]
+    assert classified == len(api_usages)
+    assert not any(
+        item["usage"]["kind"] == "gin_import"
+        for item in first["unmatched_usages"]
+    )
+    assert first["unmatched_usages"] == []
+    primary_ids = [
+        usage_id
+        for task in first["ordered_migration_tasks"]
+        if task["task_kind"] == "primary"
+        for usage_id in task["direct_usage_ids"]
+    ]
+    assert len(primary_ids) == len(set(primary_ids))
+    assert set(primary_ids) == {usage["usage_id"] for usage in api_usages}
+    assert first["ordered_migration_tasks"][0]["direct_usage_ids"] == []
     assert [task["phase"] for task in first["ordered_migration_tasks"]] == [
         phase.value for phase in MigrationPhase
     ]

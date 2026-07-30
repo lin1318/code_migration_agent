@@ -8,9 +8,12 @@ from pathlib import Path
 from knowledge.registry import load_rule_registry
 from models.analyzer import AnalyzerResult
 from models.inspection import RepositoryInspection
-from models.migration_plan import MigrationInventory, MigrationPhase
+from models.migration_plan import MigrationInventory
 from tools.go_analyzer import AnalyzerCommand, run_go_analyzer
-from tools.migration_planner import build_migration_inventory
+from tools.migration_planner import (
+    build_migration_inventory,
+    validate_migration_inventory,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_RULE_PATH = PROJECT_ROOT / "knowledge"
@@ -67,24 +70,10 @@ def inspect_repository(
 
 
 def _validate_plan(inventory: MigrationInventory) -> None:
-    expected = list(MigrationPhase)
-    actual = [task.phase for task in inventory.tasks]
-    if actual != expected or [task.order for task in inventory.tasks] != list(
-        range(1, 11)
-    ):
-        raise PlanningInvariantError(
-            "migration task ordering does not match the required ten phases"
-        )
-    classified = (
-        len(inventory.exact_migrations)
-        + len(inventory.migrations_requiring_review)
-        + len(inventory.unsupported_usages)
-        + len(inventory.unmatched_usages)
-    )
-    if classified != len(inventory.discovered_gin_usages):
-        raise PlanningInvariantError(
-            "not every discovered Gin usage was classified exactly once"
-        )
+    try:
+        validate_migration_inventory(inventory)
+    except ValueError as error:
+        raise PlanningInvariantError(str(error)) from error
 
 
 def _packages_containing_gin_usages(analysis: AnalyzerResult) -> list[str]:
