@@ -61,7 +61,7 @@ def inspect_repository(
     registry = load_rule_registry(rule_path)
     inventory = build_migration_inventory(execution.result, registry)
     _validate_plan(inventory)
-    packages = _packages_containing_gin_usages(execution.result)
+    packages = packages_containing_gin_usages(execution.result)
     return RepositoryInspection.from_inventory(
         str(repository),
         packages,
@@ -76,7 +76,7 @@ def _validate_plan(inventory: MigrationInventory) -> None:
         raise PlanningInvariantError(str(error)) from error
 
 
-def _packages_containing_gin_usages(analysis: AnalyzerResult) -> list[str]:
+def packages_containing_gin_usages(analysis: AnalyzerResult) -> list[str]:
     usage_files = {_normalized_path(usage.file) for usage in analysis.usages}
     packages: set[str] = set()
     for package in analysis.packages:

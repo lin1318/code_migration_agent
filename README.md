@@ -1,8 +1,8 @@
 # Code Migration Agent
 
-Stage 6 adds deterministic migration inventory and ordered planning from analyzer
-output and the YAML rule registry. Source-code modification, LLM, and LangGraph
-execution are not connected yet.
+Stage 7 adds deterministic LangGraph orchestration around the existing repository
+inspection and migration-planning services. Source-code modification and LLM
+execution are not connected.
 
 ## Requirements
 
@@ -29,6 +29,17 @@ python -m agent inspect --repo <repository-path> --output migration-plan.json
 ```
 
 Use `--analyzer-timeout <seconds>` to override the 30-second analyzer timeout.
+
+Run the same deterministic inspection through the Stage 7 LangGraph workflow:
+
+```shell
+python -m agent workflow inspect \
+  --repo <repository-path> \
+  --output workflow-result.json
+```
+
+Use `--rules`, `--analyzer-timeout`, and `--checkpoint-memory` to override the
+rule registry, timeout, and optional test/debug in-memory checkpointing.
 
 After installing the project, the CLI is also available as:
 

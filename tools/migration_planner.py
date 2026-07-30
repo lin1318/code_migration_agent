@@ -120,45 +120,28 @@ def build_migration_inventory(
 def validate_migration_inventory(inventory: MigrationInventory) -> None:
     """Validate classification and primary task ownership invariants."""
 
-    expected_phases = list(_PHASES)
-    if [task.phase for task in inventory.tasks] != expected_phases:
-        raise ValueError("migration tasks do not follow the required phase order")
-    if [task.order for task in inventory.tasks] != list(range(1, 11)):
-        raise ValueError("migration task order values must be 1 through 10")
+    validate_inventory_classification(inventory)
+    validate_migration_plan(
+        inventory.tasks,
+        inventory.discovered_gin_usages,
+    )
+
+
+def validate_inventory_classification(inventory: MigrationInventory) -> None:
+    """Validate semantic usage identity and classification coverage."""
+
+    usage_ids = [usage.usage_id for usage in inventory.discovered_gin_usages]
+    if len(usage_ids) != len(set(usage_ids)):
+        raise ValueError("discovered Gin usage IDs are not unique")
+    summary = inventory.repository_summary
+    if summary.gin_import_count + summary.gin_api_usage_count != summary.gin_usage_count:
+        raise ValueError("Gin import and semantic API counts do not equal total usages")
 
     api_ids = {
         usage.usage_id
         for usage in inventory.discovered_gin_usages
         if usage.kind != "gin_import"
     }
-    direct_ids = [
-        usage_id
-        for task in inventory.tasks
-        if task.task_kind is MigrationTaskKind.PRIMARY
-        for usage_id in task.direct_usage_ids
-    ]
-    duplicates = sorted(
-        usage_id for usage_id, count in Counter(direct_ids).items() if count > 1
-    )
-    if duplicates:
-        raise ValueError(f"direct usages have multiple primary owners: {duplicates}")
-    if set(direct_ids) != api_ids:
-        raise ValueError("primary task usages do not exactly cover non-import Gin usages")
-
-    for task in inventory.tasks:
-        if task.task_kind is MigrationTaskKind.PRIMARY:
-            if task.derived_from_usage_ids or task.derived_information:
-                raise ValueError("primary tasks cannot claim derived usage information")
-        elif task.task_kind is MigrationTaskKind.DERIVED:
-            if task.direct_usage_ids:
-                raise ValueError("derived tasks cannot own direct usages")
-        elif (
-            task.direct_usage_ids
-            or task.derived_from_usage_ids
-            or task.derived_information
-        ):
-            raise ValueError("workflow-only tasks cannot reference usages")
-
     classified_id_list = [
         item.usage.usage_id
         for group in (
@@ -174,6 +157,59 @@ def validate_migration_inventory(inventory: MigrationInventory) -> None:
     if set(classified_id_list) != api_ids:
         raise ValueError("API classification does not exactly cover non-import Gin usages")
 
+
+def get_ordered_migration_plan(
+    inventory: MigrationInventory,
+) -> list[MigrationTask]:
+    """Return the deterministic ordered plan already built for an inventory."""
+
+    return list(inventory.tasks)
+
+
+def validate_migration_plan(
+    tasks: list[MigrationTask],
+    usages: list[InventoryUsage],
+) -> None:
+    """Validate ordering and exclusive primary usage ownership."""
+
+    expected_phases = list(_PHASES)
+    if [task.phase for task in tasks] != expected_phases:
+        raise ValueError("migration tasks do not follow the required phase order")
+    if [task.order for task in tasks] != list(range(1, 11)):
+        raise ValueError("migration task order values must be 1 through 10")
+
+    api_ids = {
+        usage.usage_id
+        for usage in usages
+        if usage.kind != "gin_import"
+    }
+    direct_ids = [
+        usage_id
+        for task in tasks
+        if task.task_kind is MigrationTaskKind.PRIMARY
+        for usage_id in task.direct_usage_ids
+    ]
+    duplicates = sorted(
+        usage_id for usage_id, count in Counter(direct_ids).items() if count > 1
+    )
+    if duplicates:
+        raise ValueError(f"direct usages have multiple primary owners: {duplicates}")
+    if set(direct_ids) != api_ids:
+        raise ValueError("primary task usages do not exactly cover non-import Gin usages")
+
+    for task in tasks:
+        if task.task_kind is MigrationTaskKind.PRIMARY:
+            if task.derived_from_usage_ids or task.derived_information:
+                raise ValueError("primary tasks cannot claim derived usage information")
+        elif task.task_kind is MigrationTaskKind.DERIVED:
+            if task.direct_usage_ids:
+                raise ValueError("derived tasks cannot own direct usages")
+        elif (
+            task.direct_usage_ids
+            or task.derived_from_usage_ids
+            or task.derived_information
+        ):
+            raise ValueError("workflow-only tasks cannot reference usages")
 
 def _repository_summary(analysis: AnalyzerResult) -> RepositorySummary:
     source_files = sorted(

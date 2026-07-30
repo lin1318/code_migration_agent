@@ -9,7 +9,7 @@ description = "A code migration agent"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
 dependencies = [
-    "langgraph",
+    "langgraph>=1,<2",
     "pydantic>=2,<3",
     "PyYAML>=6,<7",
 ]
@@ -23,4 +23,4 @@ dev = [
 code-migration-agent = "agent.cli:main"
 
 [tool.setuptools]
-packages = ["agent", "knowledge", "models", "tools"]
+packages = ["agent", "knowledge", "models", "tools", "workflow"]

@@ -3,13 +3,18 @@ import sys
 from pathlib import Path
 from typing import TextIO
 
+from langgraph.checkpoint.memory import InMemorySaver
+from pydantic import BaseModel
+
 from knowledge.registry import RuleRegistryError
 from models.inspection import RepositoryInspection
+from models.workflow import WorkflowState
 from tools.go_analyzer import AnalyzerError
 from tools.inspection import (
     InspectionError,
     inspect_repository,
 )
+from workflow.service import run_inspection_workflow
 
 
 def main(
@@ -35,10 +40,38 @@ def main(
         default=30.0,
         metavar="SECONDS",
     )
+    workflow_parser = commands.add_parser(
+        "workflow",
+        help="run deterministic LangGraph workflows",
+    )
+    workflow_commands = workflow_parser.add_subparsers(
+        dest="workflow_command",
+        required=True,
+    )
+    workflow_inspect = workflow_commands.add_parser(
+        "inspect",
+        help="inspect and plan through the deterministic StateGraph",
+    )
+    workflow_inspect.add_argument("--repo", required=True, type=Path)
+    workflow_inspect.add_argument("--output", type=Path)
+    workflow_inspect.add_argument("--rules", type=Path)
+    workflow_inspect.add_argument(
+        "--analyzer-timeout",
+        type=_positive_timeout,
+        default=30.0,
+        metavar="SECONDS",
+    )
+    workflow_inspect.add_argument(
+        "--checkpoint-memory",
+        action="store_true",
+        help="enable an in-memory checkpointer for this process",
+    )
     args = parser.parse_args(argv)
 
     if args.command == "inspect":
         return _run_inspect(args, stdout, stderr)
+    if args.command == "workflow" and args.workflow_command == "inspect":
+        return _run_workflow_inspect(args, stdout, stderr)
     parser.error(f"unknown command: {args.command}")
     return 2
 
@@ -111,3 +144,78 @@ def _positive_timeout(value: str) -> float:
     if timeout <= 0:
         raise argparse.ArgumentTypeError("timeout must be greater than zero")
     return timeout
+
+
+def _run_workflow_inspect(
+    args: argparse.Namespace,
+    stdout: TextIO,
+    stderr: TextIO,
+) -> int:
+    checkpointer = InMemorySaver() if args.checkpoint_memory else None
+    kwargs = {
+        "analyzer_timeout": args.analyzer_timeout,
+        "checkpointer": checkpointer,
+    }
+    if args.rules is not None:
+        kwargs["rule_registry_path"] = args.rules
+    state = run_inspection_workflow(args.repo, **kwargs)
+    report = state["final_report"]
+    if args.output is not None:
+        try:
+            _write_workflow_output(args.output, args.repo, report)
+        except (OSError, ValueError) as error:
+            print(f"error: {error}", file=stderr)
+            return 1
+    _print_workflow_summary(state, stdout)
+    if args.output is not None:
+        print(f"Workflow result JSON: {args.output.resolve()}", file=stdout)
+    if state["final_status"] == "failed":
+        for error in state.get("errors", []):
+            print(
+                f"error [{error.stage}] {error.error_type}: {error.message}",
+                file=stderr,
+            )
+        return 1
+    return 0
+
+
+def _write_workflow_output(
+    output: Path,
+    repository: Path,
+    report: BaseModel,
+) -> None:
+    output = output.resolve()
+    repository = repository.resolve()
+    if output == repository or repository in output.parents:
+        raise ValueError("output path must be outside the inspected repository")
+    output.write_text(report.model_dump_json(indent=2) + "\n", encoding="utf-8")
+
+
+def _print_workflow_summary(state: WorkflowState, stream: TextIO) -> None:
+    completed = ", ".join(state.get("completed_stages", [])) or "none"
+    summary = state.get("repository_summary")
+    inventory = state.get("migration_inventory")
+    plan = state.get("migration_plan") or []
+    print(f"Completed stages: {completed}", file=stream)
+    print(f"Repository path: {state['repository_path']}", file=stream)
+    if summary is not None and inventory is not None:
+        print(f"Module path: {summary.module_path or 'unavailable'}", file=stream)
+        print(f"Package count: {summary.package_count}", file=stream)
+        print(f"Go file count: {summary.source_file_count}", file=stream)
+        print(f"Total Gin usages: {summary.gin_usage_count}", file=stream)
+        print(f"Gin import count: {summary.gin_import_count}", file=stream)
+        print(
+            f"Semantic Gin API usage count: {summary.gin_api_usage_count}",
+            file=stream,
+        )
+        print(f"Exact migration count: {len(inventory.exact_migrations)}", file=stream)
+        print(
+            "Review-required count: "
+            f"{len(inventory.migrations_requiring_review)}",
+            file=stream,
+        )
+        print(f"Unsupported count: {len(inventory.unsupported_usages)}", file=stream)
+        print(f"Unmatched count: {len(inventory.unmatched_usages)}", file=stream)
+    print(f"Migration task count: {len(plan)}", file=stream)
+    print(f"Warning count: {len(state.get('warnings', []))}", file=stream)
+    print(f"Final status: {state['final_status']}", file=stream)
