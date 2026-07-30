@@ -1,7 +1,7 @@
 # Code Migration Agent
 
-Stage 3 extends the semantic Go repository analyzer with Gin usage detection.
-Migration logic is not included yet.
+Stage 4 adds a typed Python adapter for the semantic Go repository analyzer.
+LLM, LangGraph, and migration execution are not connected yet.
 
 ## Requirements
 

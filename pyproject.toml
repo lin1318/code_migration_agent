@@ -10,7 +10,12 @@ readme = "README.md"
 requires-python = ">=3.13,<3.14"
 dependencies = [
     "langgraph",
-    "pydantic",
+    "pydantic>=2,<3",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8,<9",
 ]
 
 [project.scripts]
