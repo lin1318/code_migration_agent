@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "code-migration-agent"
+version = "0.1.0"
+description = "A code migration agent"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "langgraph",
+    "pydantic",
+]
+
+[project.scripts]
+code-migration-agent = "agent.cli:main"
+
+[tool.setuptools]
+packages = ["agent", "models", "tools"]

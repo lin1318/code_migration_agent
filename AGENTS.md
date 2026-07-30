@@ -2,7 +2,7 @@
 
 ## Project Scope
 
-- This project builds a Gin-to-Hertz migration agent.
+- This project builds a code migration agent.
 - Python handles orchestration.
 - Go handles semantic source-code analysis.
 - Do not implement future stages unless explicitly requested.
