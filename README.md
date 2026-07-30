@@ -15,6 +15,21 @@ execution are not connected yet.
 python -m agent --help
 ```
 
+Inspect a Go repository and print its deterministic Gin-to-Hertz migration
+inventory:
+
+```shell
+python -m agent inspect --repo <repository-path>
+```
+
+Write the complete structured plan outside the inspected repository:
+
+```shell
+python -m agent inspect --repo <repository-path> --output migration-plan.json
+```
+
+Use `--analyzer-timeout <seconds>` to override the 30-second analyzer timeout.
+
 After installing the project, the CLI is also available as:
 
 ```shell

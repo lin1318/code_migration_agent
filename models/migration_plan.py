@@ -75,4 +75,9 @@ class MigrationInventory(PlanModel):
     exact_migrations: list[PlannedMigration]
     migrations_requiring_review: list[PlannedMigration]
     unsupported_usages: list[UnsupportedUsage]
-    tasks: list[MigrationTask] = Field(min_length=10, max_length=10)
+    unmatched_usages: list[UnsupportedUsage]
+    tasks: list[MigrationTask] = Field(
+        min_length=10,
+        max_length=10,
+        serialization_alias="ordered_migration_tasks",
+    )

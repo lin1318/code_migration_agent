@@ -40,7 +40,8 @@ def test_builds_classified_migration_inventory() -> None:
         "gin.context.should_bind_json",
         "gin.context.next",
     ]
-    assert [item.usage.symbol for item in inventory.unsupported_usages] == [
+    assert not inventory.unsupported_usages
+    assert [item.usage.symbol for item in inventory.unmatched_usages] == [
         "github.com/gin-gonic/gin",
         "github.com/gin-gonic/gin.(*Engine).GET",
     ]
@@ -107,5 +108,6 @@ def test_empty_analysis_still_has_actionable_test_and_verification_phases() -> N
     assert not inventory.exact_migrations
     assert not inventory.migrations_requiring_review
     assert not inventory.unsupported_usages
+    assert not inventory.unmatched_usages
     assert len(inventory.tasks) == 10
     assert all(task.usage_count == 0 for task in inventory.tasks)

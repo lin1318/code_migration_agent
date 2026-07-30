@@ -72,12 +72,13 @@ def build_migration_inventory(
     exact: list[PlannedMigration] = []
     review: list[PlannedMigration] = []
     unsupported: list[UnsupportedUsage] = []
+    unmatched: list[UnsupportedUsage] = []
     matched: list[tuple[GinUsage, MigrationRule]] = []
 
     for usage in usages:
         rule = registry.lookup_resolved_symbol(usage.symbol)
         if rule is None:
-            unsupported.append(
+            unmatched.append(
                 UnsupportedUsage(
                     usage=usage,
                     reason="no exact migration rule for resolved symbol",
@@ -107,6 +108,7 @@ def build_migration_inventory(
         exact_migrations=exact,
         migrations_requiring_review=review,
         unsupported_usages=unsupported,
+        unmatched_usages=unmatched,
         tasks=_build_tasks(usages, matched),
     )
 
