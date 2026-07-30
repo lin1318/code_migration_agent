@@ -1,7 +1,8 @@
 # Code Migration Agent
 
-Stage 5 adds a validated YAML registry of Gin-to-Hertz migration rules.
-Source-code modification, LLM, and LangGraph execution are not connected yet.
+Stage 6 adds deterministic migration inventory and ordered planning from analyzer
+output and the YAML rule registry. Source-code modification, LLM, and LangGraph
+execution are not connected yet.
 
 ## Requirements
 

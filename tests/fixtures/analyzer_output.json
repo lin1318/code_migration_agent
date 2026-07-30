@@ -1,0 +1,83 @@
+{
+  "module_path": "example.com/shop",
+  "packages": [
+    {
+      "import_path": "example.com/shop",
+      "name": "main",
+      "source_files": ["cmd/server/main.go"],
+      "imports": ["github.com/gin-gonic/gin"]
+    },
+    {
+      "import_path": "example.com/shop/internal/handler",
+      "name": "handler",
+      "source_files": ["internal/handler/user.go"],
+      "imports": ["net/http", "github.com/gin-gonic/gin"]
+    }
+  ],
+  "usages": [
+    {
+      "file": "internal/handler/user.go",
+      "line": 18,
+      "column": 2,
+      "kind": "context_method",
+      "symbol": "github.com/gin-gonic/gin.(*Context).JSON"
+    },
+    {
+      "file": "cmd/server/main.go",
+      "line": 8,
+      "column": 7,
+      "kind": "constructor",
+      "symbol": "github.com/gin-gonic/gin.Default"
+    },
+    {
+      "file": "internal/handler/user.go",
+      "line": 12,
+      "column": 2,
+      "kind": "context_method",
+      "symbol": "github.com/gin-gonic/gin.(*Context).Param"
+    },
+    {
+      "file": "cmd/server/main.go",
+      "line": 9,
+      "column": 2,
+      "kind": "engine_method",
+      "symbol": "github.com/gin-gonic/gin.(*Engine).GET"
+    },
+    {
+      "file": "internal/handler/user.go",
+      "line": 14,
+      "column": 2,
+      "kind": "context_method",
+      "symbol": "github.com/gin-gonic/gin.(*Context).ShouldBindJSON"
+    },
+    {
+      "file": "internal/handler/user.go",
+      "line": 10,
+      "column": 17,
+      "kind": "gin_type",
+      "symbol": "github.com/gin-gonic/gin.Context"
+    },
+    {
+      "file": "internal/handler/user.go",
+      "line": 24,
+      "column": 2,
+      "kind": "context_method",
+      "symbol": "github.com/gin-gonic/gin.(*Context).Next"
+    },
+    {
+      "file": "internal/handler/user.go",
+      "line": 9,
+      "column": 13,
+      "kind": "gin_type",
+      "symbol": "github.com/gin-gonic/gin.HandlerFunc"
+    },
+    {
+      "file": "cmd/server/main.go",
+      "line": 3,
+      "column": 8,
+      "kind": "gin_import",
+      "symbol": "github.com/gin-gonic/gin"
+    }
+  ],
+  "loading_errors": []
+}
