@@ -1,7 +1,7 @@
 # Code Migration Agent
 
-Stage 2 provides a semantic Go repository analyzer. Gin-specific migration
-logic is not included yet.
+Stage 3 extends the semantic Go repository analyzer with Gin usage detection.
+Migration logic is not included yet.
 
 ## Requirements
 
@@ -28,5 +28,5 @@ go run ./cmd/analyzer <repository-path>
 ```
 
 The analyzer loads every package below the repository path and emits JSON with
-module, package, source file, import, and structured package-loading error
-information.
+module, package, source file, import, structured package-loading error, and
+semantically resolved Gin usage information.

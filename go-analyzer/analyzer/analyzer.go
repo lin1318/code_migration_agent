@@ -15,7 +15,17 @@ import (
 type Result struct {
 	ModulePath    string         `json:"module_path"`
 	Packages      []Package      `json:"packages"`
+	Usages        []Usage        `json:"usages"`
 	LoadingErrors []LoadingError `json:"loading_errors"`
+}
+
+// Usage identifies one semantically resolved Gin usage.
+type Usage struct {
+	File   string `json:"file"`
+	Line   int    `json:"line"`
+	Column int    `json:"column"`
+	Kind   string `json:"kind"`
+	Symbol string `json:"symbol"`
 }
 
 // Package describes one package found below the repository root.
@@ -39,6 +49,7 @@ type LoadingError struct {
 func Analyze(repositoryPath string) Result {
 	result := Result{
 		Packages:      []Package{},
+		Usages:        []Usage{},
 		LoadingErrors: []LoadingError{},
 	}
 
@@ -104,6 +115,7 @@ func Analyze(repositoryPath string) Result {
 			SourceFiles: files,
 			Imports:     imports,
 		})
+		result.Usages = append(result.Usages, findGinUsages(root, pkg)...)
 
 		for _, loadErr := range pkg.Errors {
 			result.LoadingErrors = append(result.LoadingErrors, LoadingError{
@@ -127,6 +139,22 @@ func Analyze(repositoryPath string) Result {
 			return left.Position < right.Position
 		}
 		return left.Message < right.Message
+	})
+	sort.Slice(result.Usages, func(i, j int) bool {
+		left, right := result.Usages[i], result.Usages[j]
+		if left.File != right.File {
+			return left.File < right.File
+		}
+		if left.Line != right.Line {
+			return left.Line < right.Line
+		}
+		if left.Column != right.Column {
+			return left.Column < right.Column
+		}
+		if left.Kind != right.Kind {
+			return left.Kind < right.Kind
+		}
+		return left.Symbol < right.Symbol
 	})
 
 	return result

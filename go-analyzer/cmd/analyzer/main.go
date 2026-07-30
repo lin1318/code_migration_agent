@@ -28,6 +28,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 	if flags.NArg() != 1 {
 		result = analyzer.Result{
 			Packages: []analyzer.Package{},
+			Usages:   []analyzer.Usage{},
 			LoadingErrors: []analyzer.LoadingError{{
 				Kind:    "argument",
 				Message: "exactly one repository path is required",
