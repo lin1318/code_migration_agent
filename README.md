@@ -1,6 +1,7 @@
 # Code Migration Agent
 
-Stage 1 provides repository scaffolding for a Gin-to-Hertz migration agent.
+Stage 2 provides a semantic Go repository analyzer. Gin-specific migration
+logic is not included yet.
 
 ## Requirements
 
@@ -23,5 +24,9 @@ code-migration-agent --help
 
 ```shell
 cd go-analyzer
-go run ./cmd/analyzer --help
+go run ./cmd/analyzer <repository-path>
 ```
+
+The analyzer loads every package below the repository path and emits JSON with
+module, package, source file, import, and structured package-loading error
+information.

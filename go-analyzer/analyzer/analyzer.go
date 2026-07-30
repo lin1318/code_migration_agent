@@ -1,0 +1,146 @@
+// Package analyzer loads and describes Go repositories using Go's semantic
+// package-loading APIs.
+package analyzer
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"sort"
+
+	"golang.org/x/tools/go/packages"
+)
+
+// Result is the JSON-serializable description of a Go repository.
+type Result struct {
+	ModulePath    string         `json:"module_path"`
+	Packages      []Package      `json:"packages"`
+	LoadingErrors []LoadingError `json:"loading_errors"`
+}
+
+// Package describes one package found below the repository root.
+type Package struct {
+	ImportPath  string   `json:"import_path"`
+	Name        string   `json:"name"`
+	SourceFiles []string `json:"source_files"`
+	Imports     []string `json:"imports"`
+}
+
+// LoadingError is a structured repository or package loading failure.
+type LoadingError struct {
+	Kind     string `json:"kind"`
+	Package  string `json:"package,omitempty"`
+	Position string `json:"position,omitempty"`
+	Message  string `json:"message"`
+}
+
+// Analyze loads all packages in repositoryPath and returns their semantic
+// package metadata. Load and type-checking failures are included in Result.
+func Analyze(repositoryPath string) Result {
+	result := Result{
+		Packages:      []Package{},
+		LoadingErrors: []LoadingError{},
+	}
+
+	root, err := filepath.Abs(repositoryPath)
+	if err != nil {
+		result.LoadingErrors = append(result.LoadingErrors, LoadingError{
+			Kind: "repository", Message: fmt.Sprintf("resolve repository path: %v", err),
+		})
+		return result
+	}
+
+	info, err := os.Stat(root)
+	if err != nil {
+		result.LoadingErrors = append(result.LoadingErrors, LoadingError{
+			Kind: "repository", Message: fmt.Sprintf("access repository: %v", err),
+		})
+		return result
+	}
+	if !info.IsDir() {
+		result.LoadingErrors = append(result.LoadingErrors, LoadingError{
+			Kind: "repository", Message: "repository path is not a directory",
+		})
+		return result
+	}
+
+	cfg := &packages.Config{
+		Dir: root,
+		Mode: packages.NeedName |
+			packages.NeedFiles |
+			packages.NeedCompiledGoFiles |
+			packages.NeedImports |
+			packages.NeedDeps |
+			packages.NeedSyntax |
+			packages.NeedTypes |
+			packages.NeedTypesInfo |
+			packages.NeedModule,
+	}
+	loaded, err := packages.Load(cfg, "./...")
+	if err != nil {
+		result.LoadingErrors = append(result.LoadingErrors, LoadingError{
+			Kind: "load", Message: err.Error(),
+		})
+		return result
+	}
+
+	for _, pkg := range loaded {
+		if result.ModulePath == "" && pkg.Module != nil {
+			result.ModulePath = pkg.Module.Path
+		}
+
+		files := append([]string(nil), pkg.GoFiles...)
+		sort.Strings(files)
+
+		imports := make([]string, 0, len(pkg.Imports))
+		for path := range pkg.Imports {
+			imports = append(imports, path)
+		}
+		sort.Strings(imports)
+
+		result.Packages = append(result.Packages, Package{
+			ImportPath:  pkg.PkgPath,
+			Name:        pkg.Name,
+			SourceFiles: files,
+			Imports:     imports,
+		})
+
+		for _, loadErr := range pkg.Errors {
+			result.LoadingErrors = append(result.LoadingErrors, LoadingError{
+				Kind:     errorKind(loadErr.Kind),
+				Package:  pkg.PkgPath,
+				Position: loadErr.Pos,
+				Message:  loadErr.Msg,
+			})
+		}
+	}
+
+	sort.Slice(result.Packages, func(i, j int) bool {
+		return result.Packages[i].ImportPath < result.Packages[j].ImportPath
+	})
+	sort.SliceStable(result.LoadingErrors, func(i, j int) bool {
+		left, right := result.LoadingErrors[i], result.LoadingErrors[j]
+		if left.Package != right.Package {
+			return left.Package < right.Package
+		}
+		if left.Position != right.Position {
+			return left.Position < right.Position
+		}
+		return left.Message < right.Message
+	})
+
+	return result
+}
+
+func errorKind(kind packages.ErrorKind) string {
+	switch kind {
+	case packages.ListError:
+		return "list"
+	case packages.ParseError:
+		return "parse"
+	case packages.TypeError:
+		return "type"
+	default:
+		return "unknown"
+	}
+}
