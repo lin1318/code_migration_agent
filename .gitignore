@@ -216,3 +216,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Vendored dependencies in the Gin example are restored from go.mod/go.sum.
+examples/go-gin-example/vendor/
