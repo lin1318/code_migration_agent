@@ -241,6 +241,7 @@ def test_generates_complete_json_output(mock_analyzer, tmp_path: Path) -> None:
         "unsupported_usages",
         "unmatched_usages",
         "ordered_migration_tasks",
+        "semantic_references",
     }
     assert len(document["ordered_migration_tasks"]) == 10
 

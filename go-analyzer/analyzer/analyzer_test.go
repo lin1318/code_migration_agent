@@ -57,6 +57,26 @@ func TestAnalyzeMultiplePackages(t *testing.T) {
 	}
 }
 
+func TestAnalyzeReturnsSemanticSymbolReferences(t *testing.T) {
+	result := Analyze(fixturePath(t, "gin-positive"))
+
+	if len(result.LoadingErrors) != 0 {
+		t.Fatalf("Analyze() errors = %#v", result.LoadingErrors)
+	}
+	found := false
+	for _, reference := range result.References {
+		if reference.Symbol == "github.com/gin-gonic/gin.(*Context).JSON" {
+			found = true
+			if !reference.FrameworkBound || !reference.Resolved {
+				t.Errorf("reference = %#v, want resolved framework reference", reference)
+			}
+		}
+	}
+	if !found {
+		t.Fatal("semantic Context.JSON reference not found")
+	}
+}
+
 func TestAnalyzeInvalidGoCodeReturnsStructuredErrors(t *testing.T) {
 	result := Analyze(fixturePath(t, "invalid"))
 

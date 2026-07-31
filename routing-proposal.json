@@ -1,0 +1,19 @@
+{
+  "task_id": "migration-task-03-routing",
+  "status": "blocked",
+  "summary": "Routing migration in routers/router.go is blocked because prerequisite migrations for server construction, middleware, and handler function signatures have not been applied.",
+  "files_to_modify": [],
+  "patch": null,
+  "confidence": "high",
+  "assumptions": [],
+  "manual_review_notes": [
+    "Route registration requires Hertz server instance (*server.Hertz) and Hertz handler signatures (app.HandlerFunc).",
+    "Handlers in package api and v1 currently use *gin.Context.",
+    "Middleware functions (jwt.JWT, gin.Logger, gin.Recovery) currently use Gin types."
+  ],
+  "unresolved_dependencies": [
+    "server_bootstrap",
+    "middleware",
+    "handlers"
+  ]
+}

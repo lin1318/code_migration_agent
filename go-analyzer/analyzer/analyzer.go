@@ -16,7 +16,25 @@ type Result struct {
 	ModulePath    string         `json:"module_path"`
 	Packages      []Package      `json:"packages"`
 	Usages        []Usage        `json:"usages"`
+	References    []Reference    `json:"references"`
 	LoadingErrors []LoadingError `json:"loading_errors"`
+}
+
+// Reference describes a semantically resolved symbol referenced by source.
+type Reference struct {
+	File            string `json:"file"`
+	Line            int    `json:"line"`
+	Column          int    `json:"column"`
+	EnclosingSymbol string `json:"enclosing_symbol,omitempty"`
+	Symbol          string `json:"symbol"`
+	PackagePath     string `json:"package_path,omitempty"`
+	ModulePath      string `json:"module_path,omitempty"`
+	DefinitionFile  string `json:"definition_file,omitempty"`
+	DefinitionLine  int    `json:"definition_line,omitempty"`
+	Signature       string `json:"signature,omitempty"`
+	FrameworkBound  bool   `json:"framework_bound"`
+	StandardLibrary bool   `json:"standard_library"`
+	Resolved        bool   `json:"resolved"`
 }
 
 // Usage identifies one semantically resolved Gin usage.
@@ -50,6 +68,7 @@ func Analyze(repositoryPath string) Result {
 	result := Result{
 		Packages:      []Package{},
 		Usages:        []Usage{},
+		References:    []Reference{},
 		LoadingErrors: []LoadingError{},
 	}
 
@@ -116,6 +135,7 @@ func Analyze(repositoryPath string) Result {
 			Imports:     imports,
 		})
 		result.Usages = append(result.Usages, findGinUsages(root, pkg)...)
+		result.References = append(result.References, findReferences(root, pkg)...)
 
 		for _, loadErr := range pkg.Errors {
 			result.LoadingErrors = append(result.LoadingErrors, LoadingError{
@@ -153,6 +173,19 @@ func Analyze(repositoryPath string) Result {
 		}
 		if left.Kind != right.Kind {
 			return left.Kind < right.Kind
+		}
+		return left.Symbol < right.Symbol
+	})
+	sort.Slice(result.References, func(i, j int) bool {
+		left, right := result.References[i], result.References[j]
+		if left.File != right.File {
+			return left.File < right.File
+		}
+		if left.Line != right.Line {
+			return left.Line < right.Line
+		}
+		if left.Column != right.Column {
+			return left.Column < right.Column
 		}
 		return left.Symbol < right.Symbol
 	})

@@ -36,7 +36,7 @@ def test_loads_production_rules_and_performs_exact_lookup() -> None:
 
     registry = load_rule_registry(knowledge)
 
-    assert len(registry) == 23
+    assert len(registry) == 32
     rule = registry.lookup("github.com/gin-gonic/gin", "(*Context).JSON")
     assert rule is not None
     assert rule.rule_id == "gin.context.json"

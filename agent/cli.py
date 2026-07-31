@@ -6,6 +6,9 @@ from typing import TextIO
 from langgraph.checkpoint.memory import InMemorySaver
 from pydantic import BaseModel
 
+from agent.bundle_cli import add_bundle_commands, run_bundle_command
+from agent.dependency_cli import add_dependency_commands, run_dependency_command
+from agent.patch_cli import add_patch_commands, run_patch_command
 from knowledge.registry import RuleRegistryError
 from models.inspection import RepositoryInspection
 from models.workflow import WorkflowState
@@ -66,12 +69,21 @@ def main(
         action="store_true",
         help="enable an in-memory checkpointer for this process",
     )
+    add_patch_commands(commands)
+    add_dependency_commands(commands)
+    add_bundle_commands(commands)
     args = parser.parse_args(argv)
 
     if args.command == "inspect":
         return _run_inspect(args, stdout, stderr)
     if args.command == "workflow" and args.workflow_command == "inspect":
         return _run_workflow_inspect(args, stdout, stderr)
+    if args.command == "patch" and args.patch_command == "generate":
+        return run_patch_command(args, stdout, stderr)
+    if args.command == "dependency" and args.dependency_command == "resolve":
+        return run_dependency_command(args, stdout, stderr)
+    if args.command == "bundle":
+        return run_bundle_command(args, stdout, stderr)
     parser.error(f"unknown command: {args.command}")
     return 2
 
@@ -152,14 +164,24 @@ def _run_workflow_inspect(
     stderr: TextIO,
 ) -> int:
     checkpointer = InMemorySaver() if args.checkpoint_memory else None
-    kwargs = {
-        "analyzer_timeout": args.analyzer_timeout,
-        "checkpointer": checkpointer,
-    }
-    if args.rules is not None:
-        kwargs["rule_registry_path"] = args.rules
-    state = run_inspection_workflow(args.repo, **kwargs)
-    report = state["final_report"]
+    if args.rules is None:
+        state = run_inspection_workflow(
+            args.repo,
+            analyzer_timeout=args.analyzer_timeout,
+            checkpointer=checkpointer,
+        )
+    else:
+        state = run_inspection_workflow(
+            args.repo,
+            analyzer_timeout=args.analyzer_timeout,
+            rule_registry_path=args.rules,
+            checkpointer=checkpointer,
+        )
+    report = state.get("final_report")
+    final_status = state.get("final_status")
+    if report is None or final_status is None:
+        print("error: workflow returned incomplete final state", file=stderr)
+        return 1
     if args.output is not None:
         try:
             _write_workflow_output(args.output, args.repo, report)
@@ -169,7 +191,7 @@ def _run_workflow_inspect(
     _print_workflow_summary(state, stdout)
     if args.output is not None:
         print(f"Workflow result JSON: {args.output.resolve()}", file=stdout)
-    if state["final_status"] == "failed":
+    if final_status == "failed":
         for error in state.get("errors", []):
             print(
                 f"error [{error.stage}] {error.error_type}: {error.message}",
@@ -197,7 +219,10 @@ def _print_workflow_summary(state: WorkflowState, stream: TextIO) -> None:
     inventory = state.get("migration_inventory")
     plan = state.get("migration_plan") or []
     print(f"Completed stages: {completed}", file=stream)
-    print(f"Repository path: {state['repository_path']}", file=stream)
+    print(
+        f"Repository path: {state.get('repository_path', 'unavailable')}",
+        file=stream,
+    )
     if summary is not None and inventory is not None:
         print(f"Module path: {summary.module_path or 'unavailable'}", file=stream)
         print(f"Package count: {summary.package_count}", file=stream)
@@ -218,4 +243,7 @@ def _print_workflow_summary(state: WorkflowState, stream: TextIO) -> None:
         print(f"Unmatched count: {len(inventory.unmatched_usages)}", file=stream)
     print(f"Migration task count: {len(plan)}", file=stream)
     print(f"Warning count: {len(state.get('warnings', []))}", file=stream)
-    print(f"Final status: {state['final_status']}", file=stream)
+    print(
+        f"Final status: {state.get('final_status', 'unavailable')}",
+        file=stream,
+    )

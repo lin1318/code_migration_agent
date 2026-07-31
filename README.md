@@ -1,8 +1,8 @@
 # Code Migration Agent
 
-Stage 7 adds deterministic LangGraph orchestration around the existing repository
-inspection and migration-planning services. Source-code modification and LLM
-execution are not connected.
+Stage 9 adds LLM-powered execution of one ready repository migration bundle on
+top of the deterministic inspection and bundle-planning services. Proposals are
+validated but never applied; source repositories remain read-only.
 
 ## Requirements
 
@@ -40,6 +40,51 @@ python -m agent workflow inspect \
 
 Use `--rules`, `--analyzer-timeout`, and `--checkpoint-memory` to override the
 rule registry, timeout, and optional test/debug in-memory checkpointing.
+
+Generate a structured proposal for exactly one routing task:
+
+```shell
+python -m agent patch generate \
+  --repo <repository-path> \
+  --plan <migration-plan.json> \
+  --phase routing \
+  --output <patch-proposal.json>
+```
+
+Configure the AiHubMix OpenAI-compatible Gemini endpoint with
+`AIHUBMIX_API_KEY`. `PATCH_MODEL_PROVIDER` defaults to `aihubmix`,
+`PATCH_MODEL_NAME` defaults to `gemini-3.6-flash-free`, and
+`AIHUBMIX_BASE_URL` defaults to `https://aihubmix.com/v1`. `--model` can
+override the model name. This command does not apply the returned patch or run
+formatters, builds, tests, or repair loops.
+
+Copy `.env.example` to `.env`, then put the real key only in `.env`:
+
+```dotenv
+AIHUBMIX_API_KEY=your-real-key
+```
+
+The CLI loads the project-root `.env` without overriding environment variables
+already set by the calling process. `.env` is ignored by Git; `.env.example`
+contains no secret and can be committed.
+
+Build the deterministic repository-wide bundle plan, then generate a proposal
+for exactly one ready bundle:
+
+```shell
+python -m agent bundle plan \
+  --repo <repository-path> \
+  --output <repository-migration-plan.json>
+
+python -m agent bundle execute \
+  --repo <repository-path> \
+  --bundle <bundle-id> \
+  --output <bundle-proposal.json>
+```
+
+Bundle execution defaults to the direct Gemini provider with
+`GEMINI_API_KEY` and model `gemini-2.5-flash`; `--model` overrides the model.
+It validates raw unified diffs but never applies them or runs repository tools.
 
 After installing the project, the CLI is also available as:
 

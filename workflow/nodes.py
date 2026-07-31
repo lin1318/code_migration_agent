@@ -180,6 +180,7 @@ def generate_report(state: WorkflowState) -> dict:
             state["repository_path"],
             packages_containing_gin_usages(state["analyzer_result"]),
             inventory.model_copy(update={"tasks": state["migration_plan"]}),
+            state["analyzer_result"].references,
         )
         completed = _completed(state, stage)
         report = WorkflowReport(

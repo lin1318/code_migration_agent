@@ -15,6 +15,16 @@ class MigrationConfidence(StrEnum):
     UNSUPPORTED = "unsupported"
 
 
+class RuleDependencyKind(StrEnum):
+    FRAMEWORK_API = "framework_api"
+    EXTERNAL_DEPENDENCY = "external_dependency"
+
+
+class ResolutionStrategy(StrEnum):
+    MIGRATE_SYMBOL = "migrate_symbol"
+    REPLACE_DEPENDENCY = "replace_dependency"
+
+
 class MigrationCategory(StrEnum):
     SERVER_INITIALIZATION = "server_initialization"
     ROUTING = "routing"
@@ -45,6 +55,9 @@ class MigrationRule(RuleModel):
     confidence: MigrationConfidence
     required_imports: list[str]
     notes: str = Field(min_length=1)
+    dependency_kind: RuleDependencyKind = RuleDependencyKind.FRAMEWORK_API
+    resolution_strategy: ResolutionStrategy = ResolutionStrategy.MIGRATE_SYMBOL
+    documentation_notes: str | None = None
 
     @model_validator(mode="after")
     def require_exactly_one_target(self) -> "MigrationRule":

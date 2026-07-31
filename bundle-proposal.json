@@ -1,0 +1,18 @@
+{
+  "bundle_id": "migration-bundle-1ffdf30b80e80f76",
+  "status": "patch_generated",
+  "summary": "Migrated JWT middleware from Gin to Hertz app.HandlerFunc and *app.RequestContext.",
+  "patches": [
+    {
+      "file": "middleware/jwt/jwt.go",
+      "patch": "diff --git a/middleware/jwt/jwt.go b/middleware/jwt/jwt.go\n--- a/middleware/jwt/jwt.go\n+++ b/middleware/jwt/jwt.go\n@@ -1,20 +1,22 @@\n package jwt\n \n import (\n+\t\"context\"\n \t\"net/http\"\n \n+\t\"github.com/cloudwego/hertz/pkg/app\"\n+\t\"github.com/cloudwego/hertz/pkg/common/utils\"\n \t\"github.com/dgrijalva/jwt-go\"\n-\t\"github.com/gin-gonic/gin\"\n \n \t\"github.com/EDDYCJY/go-gin-example/pkg/e\"\n \t\"github.com/EDDYCJY/go-gin-example/pkg/util\"\n )\n \n // JWT is jwt middleware\n-func JWT() gin.HandlerFunc {\n-\treturn func(c *gin.Context) {\n+func JWT() app.HandlerFunc {\n+\treturn func(ctx context.Context, c *app.RequestContext) {\n \t\tvar code int\n \t\tvar data interface{}\n \n \t\tcode = e.SUCCESS\n \t\ttoken := c.Query(\"token\")\n@@ -33,16 +35,16 @@ func JWT() gin.HandlerFunc {\n \t\t}\n \n \t\tif code != e.SUCCESS {\n-\t\t\tc.JSON(http.StatusUnauthorized, gin.H{\n+\t\t\tc.JSON(http.StatusUnauthorized, utils.H{\n \t\t\t\t\"code\": code,\n \t\t\t\t\"msg\":  e.GetMsg(code),\n \t\t\t\t\"data\": data,\n \t\t\t})\n \n \t\t\tc.Abort()\n \t\t\treturn\n \t\t}\n \n-\t\tc.Next()\n+\t\tc.Next(ctx)\n \t}\n }\n"
+    }
+  ],
+  "modified_files": [
+    "middleware/jwt/jwt.go"
+  ],
+  "confidence": "high",
+  "assumptions": [],
+  "manual_review_notes": [],
+  "unresolved_dependencies": []
+}

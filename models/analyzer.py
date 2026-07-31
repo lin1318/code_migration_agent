@@ -31,8 +31,25 @@ class GinUsage(AnalyzerModel):
     symbol: str
 
 
+class SymbolReference(AnalyzerModel):
+    file: str
+    line: int = Field(ge=1)
+    column: int = Field(ge=1)
+    enclosing_symbol: str = ""
+    symbol: str
+    package_path: str = ""
+    module_path: str = ""
+    definition_file: str = ""
+    definition_line: int = Field(default=0, ge=0)
+    signature: str = ""
+    framework_bound: bool = False
+    standard_library: bool = False
+    resolved: bool = False
+
+
 class AnalyzerResult(AnalyzerModel):
     module_path: str
     packages: list[AnalyzedPackage]
     usages: list[GinUsage]
+    references: list[SymbolReference] = Field(default_factory=list)
     loading_errors: list[PackageLoadingError]

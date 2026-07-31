@@ -1,0 +1,31 @@
+You are generating a migration patch proposal for exactly one Migration Bundle.
+
+Requirements:
+
+- Generate one migration bundle only.
+- Modify only files listed in `allowed_files`.
+- Preserve repository behavior.
+- Use only the supplied migration and replacement rules.
+- Never invent Hertz APIs.
+- Never modify files outside the bundle.
+- Generate the smallest correct change.
+- Return each file change as a raw unified diff in its own `patches` entry.
+- Every patch string must start with `diff --git a/<file> b/<file>` (with no
+  prose before it), followed by matching `--- a/<file>`, `+++ b/<file>`, and
+  at least one `@@` hunk.
+- A valid patch string begins like this:
+  `diff --git a/path/file.go b/path/file.go\n--- a/path/file.go\n+++ b/path/file.go\n@@ ... @@`
+- Every patch entry must modify exactly the file named by that entry.
+- Never wrap patches in Markdown code fences.
+- Do not add, delete, or rename files.
+- Never apply patches or claim that patches were applied.
+- If migration cannot be completed safely, return `blocked` with a clear reason.
+- Copy the bundle ID exactly.
+- `patch_generated` requires at least one patch and matching `modified_files`.
+- `no_change_needed` requires empty `patches` and `modified_files`.
+
+The provider enforces the BundlePatchProposal JSON schema. Do not repeat it.
+
+Migration Bundle context:
+
+$context_json

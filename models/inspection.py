@@ -2,6 +2,7 @@
 
 from pydantic import Field
 
+from models.analyzer import SymbolReference
 from models.migration_plan import (
     InventoryUsage,
     MigrationInventory,
@@ -25,6 +26,7 @@ class RepositoryInspection(PlanModel):
     ordered_migration_tasks: list[MigrationTask] = Field(
         min_length=10, max_length=10
     )
+    semantic_references: list[SymbolReference] = Field(default_factory=list)
 
     @classmethod
     def from_inventory(
@@ -32,6 +34,7 @@ class RepositoryInspection(PlanModel):
         repository_path: str,
         packages_containing_gin_usages: list[str],
         inventory: MigrationInventory,
+        semantic_references: list[SymbolReference] | None = None,
     ) -> "RepositoryInspection":
         return cls(
             repository_path=repository_path,
@@ -43,4 +46,5 @@ class RepositoryInspection(PlanModel):
             unsupported_usages=inventory.unsupported_usages,
             unmatched_usages=inventory.unmatched_usages,
             ordered_migration_tasks=inventory.tasks,
+            semantic_references=semantic_references or [],
         )

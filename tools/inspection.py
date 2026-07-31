@@ -66,6 +66,7 @@ def inspect_repository(
         str(repository),
         packages,
         inventory,
+        execution.result.references,
     )
 
 

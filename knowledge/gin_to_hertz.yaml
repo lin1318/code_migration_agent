@@ -1,4 +1,125 @@
 rules:
+  - rule_id: gin.logger
+    source_package: github.com/gin-gonic/gin
+    source_symbol: Logger
+    target_package: github.com/hertz-contrib/logger/accesslog
+    target_symbol: New
+    migration_category: middleware_control
+    confidence: review
+    required_imports:
+      - github.com/hertz-contrib/logger/accesslog
+    notes: Replace Gin request logging middleware with Hertz accesslog middleware and review log format compatibility.
+    documentation_notes: https://github.com/hertz-contrib/logger/tree/main/accesslog
+
+  - rule_id: gin.recovery
+    source_package: github.com/gin-gonic/gin
+    source_symbol: Recovery
+    target_package: github.com/cloudwego/hertz/pkg/app/middlewares/server/recovery
+    target_symbol: Recovery
+    migration_category: middleware_control
+    confidence: exact
+    required_imports:
+      - github.com/cloudwego/hertz/pkg/app/middlewares/server/recovery
+    notes: Replace Gin recovery middleware with Hertz server recovery middleware.
+    documentation_notes: https://github.com/cloudwego/hertz/tree/develop/pkg/app/middlewares/server/recovery
+
+  - rule_id: gin.context.abort
+    source_package: github.com/gin-gonic/gin
+    source_symbol: (*Context).Abort
+    target_package: github.com/cloudwego/hertz/pkg/app
+    target_symbol: (*RequestContext).Abort
+    migration_category: middleware_control
+    confidence: exact
+    required_imports:
+      - github.com/cloudwego/hertz/pkg/app
+    notes: Hertz RequestContext.Abort terminates subsequent handler execution.
+    documentation_notes: https://www.cloudwego.io/docs/hertz/tutorials/basic-feature/context/request/
+
+  - rule_id: gin.context.post-form
+    source_package: github.com/gin-gonic/gin
+    source_symbol: (*Context).PostForm
+    target_package: github.com/cloudwego/hertz/pkg/app
+    target_symbol: (*RequestContext).PostForm
+    migration_category: request_access
+    confidence: exact
+    required_imports:
+      - github.com/cloudwego/hertz/pkg/app
+    notes: Hertz RequestContext.PostForm retrieves the first form value by key.
+    documentation_notes: https://www.cloudwego.io/docs/hertz/tutorials/basic-feature/context/request/
+
+  - rule_id: gin.context.save-uploaded-file
+    source_package: github.com/gin-gonic/gin
+    source_symbol: (*Context).SaveUploadedFile
+    target_package: github.com/cloudwego/hertz/pkg/app
+    target_symbol: (*RequestContext).SaveUploadedFile
+    migration_category: request_access
+    confidence: exact
+    required_imports:
+      - github.com/cloudwego/hertz/pkg/app
+    notes: Hertz RequestContext.SaveUploadedFile saves a multipart file to the destination path.
+    documentation_notes: https://www.cloudwego.io/docs/hertz/tutorials/basic-feature/context/request/
+
+  - rule_id: gin.context.bind
+    source_package: github.com/gin-gonic/gin
+    source_symbol: (*Context).Bind
+    target_package: github.com/cloudwego/hertz/pkg/app
+    target_symbol: (*RequestContext).Bind
+    migration_category: data_binding
+    confidence: review
+    required_imports:
+      - github.com/cloudwego/hertz/pkg/app
+    notes: Hertz RequestContext.Bind performs content-aware binding; review Gin-specific validation and automatic error-response behavior.
+    documentation_notes: https://www.cloudwego.io/docs/hertz/tutorials/basic-feature/binding-and-validate/
+
+  - rule_id: gin.engine.staticfs
+    source_package: github.com/gin-gonic/gin
+    source_symbol: (*Engine).StaticFS
+    target_package: github.com/cloudwego/hertz/pkg/common/adaptor
+    target_operations:
+      - operation: replace_static_file_route
+        symbol: github.com/cloudwego/hertz/pkg/common/adaptor.HertzHandler
+        notes: Wrap net/http FileServer and preserve the route prefix using an explicit wildcard route.
+    migration_category: routing
+    confidence: review
+    required_imports:
+      - github.com/cloudwego/hertz/pkg/common/adaptor
+      - net/http
+    notes: Hertz documents serving net/http file handlers through adaptor.HertzHandler; review wildcard routing and filesystem arguments.
+    documentation_notes: https://www.cloudwego.io/docs/hertz/tutorials/basic-feature/http-adaptor/
+
+  - rule_id: gin-swagger.wrap-handler
+    source_package: github.com/swaggo/gin-swagger
+    source_symbol: WrapHandler
+    target_package: github.com/cloudwego/hertz/pkg/common/adaptor
+    target_operations:
+      - operation: replace_http_handler_adapter
+        symbol: github.com/cloudwego/hertz/pkg/common/adaptor.HertzHandler
+        value: github.com/swaggo/http-swagger.WrapHandler
+        notes: Replace the Gin Swagger handler with the official net/http Swagger handler wrapped for Hertz.
+    migration_category: routing
+    confidence: review
+    required_imports:
+      - github.com/cloudwego/hertz/pkg/common/adaptor
+      - github.com/swaggo/http-swagger
+    notes: Use Hertz's recommended HTTP adaptor migration for Swagger and review any custom Gin Swagger options.
+    dependency_kind: external_dependency
+    resolution_strategy: replace_dependency
+    documentation_notes: https://www.cloudwego.io/docs/hertz/tutorials/third-party/middleware/swagger/
+
+  - rule_id: gin-contrib.cors.default
+    source_package: github.com/gin-contrib/cors
+    source_symbol: Default
+    target_package: github.com/hertz-contrib/cors
+    target_symbol: Default
+    migration_category: middleware_control
+    confidence: exact
+    required_imports:
+      - github.com/hertz-contrib/cors
+    notes: Replace Gin CORS middleware with the deterministic Hertz CORS equivalent.
+    dependency_kind: external_dependency
+    resolution_strategy: replace_dependency
+    documentation_notes: Preserve the existing default CORS configuration behavior.
+
   - rule_id: gin.default
     source_package: github.com/gin-gonic/gin
     source_symbol: Default
