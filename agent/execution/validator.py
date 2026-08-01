@@ -113,7 +113,7 @@ def validate_patch_old_content(
     source: str,
     expected_file: str,
 ) -> None:
-    """Require every hunk old side to match the supplied current source."""
+    """Require every hunk old side to identify current source unambiguously."""
 
     source_lines = source.splitlines()
     patch_lines = patch.splitlines()
@@ -141,15 +141,25 @@ def validate_patch_old_content(
 
         start_index = old_start - 1
         actual = source_lines[start_index : start_index + old_count]
-        if start_index < 0 or old_lines != actual:
+        if start_index >= 0 and old_lines == actual:
+            continue
+
+        matching_starts = [
+            candidate + 1
+            for candidate in range(len(source_lines) - len(old_lines) + 1)
+            if source_lines[candidate : candidate + len(old_lines)] == old_lines
+        ]
+        if len(matching_starts) != 1:
             raise ProposalValidationError(
                 "validate_patch_source",
                 f"patch old-side content does not match current source for "
-                f"{expected_file!r} at hunk starting line {old_start}",
+                f"{expected_file!r} at hunk starting line {old_start}; "
+                f"matching locations found: {matching_starts}",
                 diagnostics={
                     "file": expected_file,
                     "hunk": header,
                     "old_start": str(old_start),
+                    "matching_location_count": len(matching_starts),
                 },
             )
 

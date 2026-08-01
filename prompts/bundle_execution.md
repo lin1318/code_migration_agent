@@ -6,6 +6,16 @@ Requirements:
 - Modify only files listed in `allowed_files`.
 - Preserve repository behavior.
 - Use only the supplied migration and replacement rules.
+- Treat an operation named `pass_handler_function_value` literally: pass the
+  referenced function as a value and do not append `()` or invoke it. When a
+  following operation wraps that value, place the bare function identifier
+  inside the wrapper call.
+- Before adding an import, compare its default package identifier with every
+  existing import identifier in that file. If it conflicts and the matching
+  rule supplies `target_import_alias`, import the target package with that
+  alias and use the alias for every new target symbol reference. Preserve the
+  existing project import and its identifier. Never import two packages under
+  the same identifier.
 - Never invent Hertz APIs.
 - Never modify files outside the bundle.
 - Generate the smallest correct change.

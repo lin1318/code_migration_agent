@@ -27,6 +27,7 @@ rules:
     source_package: github.com/gin-gonic/gin
     source_symbol: (*Context).Abort
     target_package: github.com/cloudwego/hertz/pkg/app
+    target_import_alias: hertzApp
     target_symbol: (*RequestContext).Abort
     migration_category: middleware_control
     confidence: exact
@@ -39,6 +40,7 @@ rules:
     source_package: github.com/gin-gonic/gin
     source_symbol: (*Context).PostForm
     target_package: github.com/cloudwego/hertz/pkg/app
+    target_import_alias: hertzApp
     target_symbol: (*RequestContext).PostForm
     migration_category: request_access
     confidence: exact
@@ -47,10 +49,33 @@ rules:
     notes: Hertz RequestContext.PostForm retrieves the first form value by key.
     documentation_notes: https://www.cloudwego.io/docs/hertz/tutorials/basic-feature/context/request/
 
+  - rule_id: net-http.request.form-file-to-hertz
+    source_package: net/http
+    source_symbol: (*Request).FormFile
+    target_package: github.com/cloudwego/hertz/pkg/app
+    target_import_alias: hertzApp
+    target_operations:
+      - operation: replace_receiver_call
+        symbol: (*RequestContext).FormFile
+        notes: Replace c.Request.FormFile(name) with c.FormFile(name) and bind the returned file header and error.
+      - operation: open_multipart_file
+        symbol: mime/multipart.(*FileHeader).Open
+        notes: Call fileHeader.Open() when the existing code requires the uploaded file stream.
+      - operation: close_multipart_file
+        symbol: mime/multipart.File.Close
+        notes: Defer closing the opened multipart file after a successful Open call.
+    migration_category: request_access
+    confidence: review
+    required_imports:
+      - github.com/cloudwego/hertz/pkg/app
+    notes: Hertz RequestContext.FormFile returns a multipart file header and error; open the header explicitly when migrating net/http Request.FormFile code that consumes the file stream.
+    documentation_notes: Use RequestContext.FormFile as shown by the Hertz upload handler pattern.
+
   - rule_id: gin.context.save-uploaded-file
     source_package: github.com/gin-gonic/gin
     source_symbol: (*Context).SaveUploadedFile
     target_package: github.com/cloudwego/hertz/pkg/app
+    target_import_alias: hertzApp
     target_symbol: (*RequestContext).SaveUploadedFile
     migration_category: request_access
     confidence: exact
@@ -63,6 +88,7 @@ rules:
     source_package: github.com/gin-gonic/gin
     source_symbol: (*Context).Bind
     target_package: github.com/cloudwego/hertz/pkg/app
+    target_import_alias: hertzApp
     target_symbol: (*RequestContext).Bind
     migration_category: data_binding
     confidence: review
@@ -92,16 +118,19 @@ rules:
     source_symbol: WrapHandler
     target_package: github.com/cloudwego/hertz/pkg/common/adaptor
     target_operations:
-      - operation: replace_http_handler_adapter
+      - operation: pass_handler_function_value
+        symbol: github.com/swaggo/http-swagger.WrapHandler
+        notes: Pass httpSwagger.WrapHandler as a function value without invoking it; never append parentheses.
+      - operation: wrap_http_handler
         symbol: github.com/cloudwego/hertz/pkg/common/adaptor.HertzHandler
         value: github.com/swaggo/http-swagger.WrapHandler
-        notes: Replace the Gin Swagger handler with the official net/http Swagger handler wrapped for Hertz.
+        notes: Generate adaptor.HertzHandler(httpSwagger.WrapHandler), not adaptor.HertzHandler(httpSwagger.WrapHandler()).
     migration_category: routing
     confidence: review
     required_imports:
       - github.com/cloudwego/hertz/pkg/common/adaptor
       - github.com/swaggo/http-swagger
-    notes: Use Hertz's recommended HTTP adaptor migration for Swagger and review any custom Gin Swagger options.
+    notes: Use Hertz's recommended HTTP adaptor migration for Swagger; WrapHandler already has the net/http handler function signature and must be passed as a value, not called.
     dependency_kind: external_dependency
     resolution_strategy: replace_dependency
     documentation_notes: https://www.cloudwego.io/docs/hertz/tutorials/third-party/middleware/swagger/
@@ -135,12 +164,62 @@ rules:
     source_package: github.com/gin-gonic/gin
     source_symbol: New
     target_package: github.com/cloudwego/hertz/pkg/app/server
-    target_symbol: New
+    target_operations:
+      - operation: replace_constructor
+        symbol: github.com/cloudwego/hertz/pkg/app/server.New
+        notes: Replace gin.New() with server.New(opts...).
+      - operation: expose_server_options_from_factory
+        symbol: github.com/cloudwego/hertz/pkg/common/config.Option
+        notes: When construction occurs in a router factory called by main, accept opts ...config.Option in that factory and forward opts... to server.New so bootstrap configuration is preserved.
     migration_category: server_initialization
-    confidence: exact
+    confidence: review
     required_imports:
       - github.com/cloudwego/hertz/pkg/app/server
-    notes: Hertz server.New creates an engine without installing default middleware.
+      - github.com/cloudwego/hertz/pkg/common/config
+    notes: Hertz server.New creates an engine without default middleware; expose config options when the caller owns address and timeout settings.
+    documentation_notes: https://www.cloudwego.io/zh/docs/hertz/tutorials/basic-feature/engine/
+
+  - rule_id: gin.set-mode.remove
+    source_package: github.com/gin-gonic/gin
+    source_symbol: SetMode
+    target_package: github.com/cloudwego/hertz/pkg/app/server
+    target_operations:
+      - operation: delete_call
+        notes: Remove gin.SetMode and its Gin-only mode argument; Hertz does not require this call.
+    migration_category: server_initialization
+    confidence: exact
+    required_imports: []
+    notes: Delete the Gin mode configuration call and remove the Gin import if no other Gin symbols remain.
+
+  - rule_id: net-http.server.listen-and-serve-to-hertz
+    source_package: net/http
+    source_symbol: (*Server).ListenAndServe
+    target_package: github.com/cloudwego/hertz/pkg/app/server
+    target_operations:
+      - operation: remove_http_server_wrapper
+        symbol: net/http.Server
+        notes: Remove the net/http.Server composite literal; a Hertz engine is not installed as an http.Handler.
+      - operation: configure_hertz_constructor
+        symbol: github.com/cloudwego/hertz/pkg/app/server.WithHostPorts
+        notes: Pass endPoint through server.WithHostPorts when calling the router factory that constructs the Hertz engine.
+      - operation: configure_read_timeout
+        symbol: github.com/cloudwego/hertz/pkg/app/server.WithReadTimeout
+        notes: Preserve readTimeout with server.WithReadTimeout.
+      - operation: configure_write_timeout
+        symbol: github.com/cloudwego/hertz/pkg/app/server.WithWriteTimeout
+        notes: Preserve writeTimeout with server.WithWriteTimeout.
+      - operation: configure_max_header_bytes
+        symbol: github.com/cloudwego/hertz/pkg/app/server.WithMaxHeaderBytes
+        notes: Preserve maxHeaderBytes with server.WithMaxHeaderBytes.
+      - operation: start_hertz
+        symbol: github.com/cloudwego/hertz/pkg/app/server.(*Hertz).Spin
+        notes: Start the configured Hertz engine with Spin().
+    migration_category: server_initialization
+    confidence: review
+    required_imports:
+      - github.com/cloudwego/hertz/pkg/app/server
+    notes: Replace net/http.Server configuration and ListenAndServe with Hertz constructor options and Spin while preserving address, read timeout, write timeout, and maximum header bytes.
+    documentation_notes: https://www.cloudwego.io/zh/docs/hertz/tutorials/basic-feature/engine/
 
   - rule_id: gin.engine.get
     source_package: github.com/gin-gonic/gin
@@ -274,6 +353,7 @@ rules:
     source_package: github.com/gin-gonic/gin
     source_symbol: Context
     target_package: github.com/cloudwego/hertz/pkg/app
+    target_import_alias: hertzApp
     target_symbol: RequestContext
     migration_category: context_type
     confidence: review
@@ -286,6 +366,7 @@ rules:
     source_package: github.com/gin-gonic/gin
     source_symbol: HandlerFunc
     target_package: github.com/cloudwego/hertz/pkg/app
+    target_import_alias: hertzApp
     target_symbol: HandlerFunc
     migration_category: handler_type
     confidence: review
@@ -298,6 +379,7 @@ rules:
     source_package: github.com/gin-gonic/gin
     source_symbol: (*Context).Param
     target_package: github.com/cloudwego/hertz/pkg/app
+    target_import_alias: hertzApp
     target_symbol: (*RequestContext).Param
     migration_category: request_access
     confidence: exact
@@ -309,6 +391,7 @@ rules:
     source_package: github.com/gin-gonic/gin
     source_symbol: (*Context).Query
     target_package: github.com/cloudwego/hertz/pkg/app
+    target_import_alias: hertzApp
     target_symbol: (*RequestContext).Query
     migration_category: request_access
     confidence: exact
@@ -320,6 +403,7 @@ rules:
     source_package: github.com/gin-gonic/gin
     source_symbol: (*Context).JSON
     target_package: github.com/cloudwego/hertz/pkg/app
+    target_import_alias: hertzApp
     target_symbol: (*RequestContext).JSON
     migration_category: response_rendering
     confidence: exact
@@ -342,6 +426,7 @@ rules:
     source_package: github.com/gin-gonic/gin
     source_symbol: (*Context).ShouldBindJSON
     target_package: github.com/cloudwego/hertz/pkg/app
+    target_import_alias: hertzApp
     target_symbol: (*RequestContext).BindAndValidate
     migration_category: data_binding
     confidence: review
@@ -353,6 +438,7 @@ rules:
     source_package: github.com/gin-gonic/gin
     source_symbol: (*Context).AbortWithStatusJSON
     target_package: github.com/cloudwego/hertz/pkg/app
+    target_import_alias: hertzApp
     target_operations:
       - operation: call
         symbol: (*RequestContext).Abort
@@ -368,6 +454,7 @@ rules:
     source_package: github.com/gin-gonic/gin
     source_symbol: (*Context).Next
     target_package: github.com/cloudwego/hertz/pkg/app
+    target_import_alias: hertzApp
     target_operations:
       - operation: replace_call
         symbol: (*RequestContext).Next

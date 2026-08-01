@@ -49,6 +49,10 @@ class MigrationRule(RuleModel):
     source_package: str = Field(min_length=1)
     source_symbol: str = Field(min_length=1)
     target_package: str = Field(min_length=1)
+    target_import_alias: str | None = Field(
+        default=None,
+        pattern=r"^[A-Za-z_][A-Za-z0-9_]*$",
+    )
     target_symbol: str | None = None
     target_operations: list[TargetOperation] | None = None
     migration_category: MigrationCategory

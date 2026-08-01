@@ -153,6 +153,40 @@ def test_bundle_context_is_minimal_and_collects_rules(bundle_fixture) -> None:
     assert context.pending_bundles == []
 
 
+def test_bundle_context_collects_rules_from_file_semantic_references(
+    bundle_fixture,
+) -> None:
+    repository, inspection, plan, bundle, registry = bundle_fixture
+    inspection.semantic_references.append(
+        SymbolReference(
+            file="router.go",
+            line=4,
+            column=5,
+            enclosing_symbol=f"{MODULE}.Routes",
+            symbol="net/http.(*Request).FormFile",
+            package_path="net/http",
+            module_path="",
+            definition_file="",
+            definition_line=0,
+            signature="func(string) (multipart.File, *multipart.FileHeader, error)",
+            framework_bound=False,
+            resolved=True,
+        )
+    )
+
+    context = build_bundle_context(
+        repository,
+        inspection,
+        plan,
+        bundle,
+        registry,
+    )
+
+    assert "net-http.request.form-file-to-hertz" in {
+        rule.rule_id for rule in context.matching_migration_rules
+    }
+
+
 def test_bundle_prompt_is_template_backed(bundle_fixture) -> None:
     repository, inspection, plan, bundle, registry = bundle_fixture
     context = build_bundle_context(
@@ -163,8 +197,12 @@ def test_bundle_prompt_is_template_backed(bundle_fixture) -> None:
 
     assert "Generate one migration bundle only" in prompt
     assert "Never invent Hertz APIs" in prompt
+    assert "pass_handler_function_value" in prompt
+    assert "do not append `()`" in prompt
+    assert "Never import two packages under the same identifier" in prompt
     assert "Unchanged context lines must be copied verbatim" in prompt
     assert '"allowed_files": [' in prompt
+    assert '"target_import_alias": "hertzApp"' in prompt
     assert "router.go" in prompt
 
 
@@ -416,6 +454,40 @@ def test_execution_retries_source_mismatch_once_with_current_source(
     assert len(model.calls) == 2
     assert "CORRECTION REQUIRED" in model.calls[1][1]
     assert '"router.go"' in model.calls[1][1]
+
+
+def test_execution_accepts_uniquely_matching_hunk_with_shifted_line_number(
+    bundle_fixture,
+) -> None:
+    repository, inspection, plan, bundle, registry = bundle_fixture
+    valid = proposal(bundle.bundle_id)
+    shifted = valid.model_copy(
+        update={
+            "patches": [
+                valid.patches[0].model_copy(
+                    update={
+                        "patch": valid.patches[0].patch.replace(
+                            "@@ -3,3 +3,3 @@",
+                            "@@ -4,3 +4,3 @@",
+                        )
+                    }
+                )
+            ]
+        }
+    )
+    model = FakeBundleModelClient(shifted)
+
+    result = execute_bundle(
+        repository,
+        inspection,
+        plan,
+        bundle,
+        registry,
+        model,
+    )
+
+    assert result.proposal == shifted
+    assert len(model.calls) == 1
 
 
 def test_context_free_hunk_is_rejected(bundle_fixture) -> None:

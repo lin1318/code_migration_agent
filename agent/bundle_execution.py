@@ -117,6 +117,12 @@ def build_bundle_context(
         for symbol in bundle.framework_symbols
         if (rule := registry.lookup_resolved_symbol(symbol)) is not None
     }
+    for reference in inspection.semantic_references:
+        if reference.file not in contents:
+            continue
+        rule = registry.lookup_resolved_symbol(reference.symbol)
+        if rule is not None:
+            matching[rule.rule_id] = rule
     replacements = {
         rule_id: rule
         for dependency in bundle.external_dependencies
