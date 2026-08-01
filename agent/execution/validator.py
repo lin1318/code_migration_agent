@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import shlex
 from pathlib import PurePosixPath
 
@@ -12,6 +13,11 @@ from agent.execution.errors import (
 from agent.execution.models import MigrationTaskContext
 from models.migration_rules import MigrationRule
 from models.patch_proposal import PatchProposal, PatchProposalStatus
+
+_HUNK_HEADER = re.compile(
+    r"^@@ -(?P<old_start>\d+)(?:,(?P<old>\d+))? "
+    r"\+(?P<new_start>\d+)(?:,(?P<new>\d+))? @@(?P<suffix>.*)$"
+)
 
 
 def validate_proposal(
@@ -101,6 +107,95 @@ def validate_patch_document(
     return normalized_expected
 
 
+def validate_patch_old_content(
+    patch: str,
+    *,
+    source: str,
+    expected_file: str,
+) -> None:
+    """Require every hunk old side to match the supplied current source."""
+
+    source_lines = source.splitlines()
+    patch_lines = patch.splitlines()
+    index = 0
+    while index < len(patch_lines):
+        header = patch_lines[index]
+        match = _HUNK_HEADER.match(header)
+        if match is None:
+            index += 1
+            continue
+        old_start = int(match.group("old_start"))
+        old_count = int(match.group("old") or "1")
+        old_lines: list[str] = []
+        index += 1
+        while index < len(patch_lines) and not patch_lines[index].startswith(
+            ("@@ ", "diff --git ")
+        ):
+            body = patch_lines[index]
+            if body.startswith("\\ No newline at end of file"):
+                index += 1
+                continue
+            if body.startswith((" ", "-")):
+                old_lines.append(body[1:])
+            index += 1
+
+        start_index = old_start - 1
+        actual = source_lines[start_index : start_index + old_count]
+        if start_index < 0 or old_lines != actual:
+            raise ProposalValidationError(
+                "validate_patch_source",
+                f"patch old-side content does not match current source for "
+                f"{expected_file!r} at hunk starting line {old_start}",
+                diagnostics={
+                    "file": expected_file,
+                    "hunk": header,
+                    "old_start": str(old_start),
+                },
+            )
+
+
+def normalize_patch_hunk_counts(patch: str) -> str:
+    """Correct only mechanical unified-diff hunk counts."""
+
+    lines = patch.splitlines()
+    changed = False
+    index = 0
+    while index < len(lines):
+        match = _HUNK_HEADER.match(lines[index])
+        if match is None:
+            index += 1
+            continue
+        header_index = index
+        expected_old = int(match.group("old") or "1")
+        expected_new = int(match.group("new") or "1")
+        actual_old = 0
+        actual_new = 0
+        index += 1
+        while index < len(lines) and not lines[index].startswith(
+            ("@@ ", "diff --git ")
+        ):
+            body = lines[index]
+            if body.startswith(" "):
+                actual_old += 1
+                actual_new += 1
+            elif body.startswith("-") and not body.startswith("--- "):
+                actual_old += 1
+            elif body.startswith("+") and not body.startswith("+++ "):
+                actual_new += 1
+            index += 1
+        if (actual_old, actual_new) != (expected_old, expected_new):
+            lines[header_index] = (
+                f"@@ -{match.group('old_start')},{actual_old} "
+                f"+{match.group('new_start')},{actual_new} @@"
+                f"{match.group('suffix')}"
+            )
+            changed = True
+    if not changed:
+        return patch
+    normalized = "\n".join(lines)
+    return normalized + ("\n" if patch.endswith(("\n", "\r")) else "")
+
+
 def _validate_no_change_needed(context: MigrationTaskContext) -> None:
     changing_rules = [
         rule
@@ -167,6 +262,7 @@ def _parse_patch_paths(patch: str) -> set[str]:
             "binary patches are not allowed",
         )
     affected: set[str] = set()
+    _validate_hunk_counts(patch)
     current: tuple[str, str] | None = None
     old_header: str | None = None
     new_header: str | None = None
@@ -221,6 +317,56 @@ def _parse_patch_paths(patch: str) -> set[str]:
     _validate_section(current, old_header, new_header, has_hunk)
     affected.add(current[1])
     return affected
+
+
+def _validate_hunk_counts(patch: str) -> None:
+    lines = patch.splitlines()
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        if not line.startswith("@@ "):
+            index += 1
+            continue
+        match = _HUNK_HEADER.match(line)
+        if match is None:
+            raise ProposalValidationError(
+                "validate_patch",
+                f"malformed hunk header: {line}",
+            )
+        expected_old = int(match.group("old") or "1")
+        expected_new = int(match.group("new") or "1")
+        actual_old = 0
+        actual_new = 0
+        context_lines = 0
+        index += 1
+        while index < len(lines) and not lines[index].startswith(
+            ("@@ ", "diff --git ")
+        ):
+            body = lines[index]
+            if body.startswith("\\ No newline at end of file"):
+                index += 1
+                continue
+            if body.startswith(" "):
+                actual_old += 1
+                actual_new += 1
+                context_lines += 1
+            elif body.startswith("-") and not body.startswith("--- "):
+                actual_old += 1
+            elif body.startswith("+") and not body.startswith("+++ "):
+                actual_new += 1
+            index += 1
+        if (actual_old, actual_new) != (expected_old, expected_new):
+            raise ProposalValidationError(
+                "validate_patch",
+                "hunk line counts do not match its header: "
+                f"expected old/new {expected_old}/{expected_new}, "
+                f"found {actual_old}/{actual_new}",
+            )
+        if context_lines == 0:
+            raise ProposalValidationError(
+                "validate_patch",
+                "each hunk must contain at least one unchanged context line",
+            )
 
 
 def _validate_section(

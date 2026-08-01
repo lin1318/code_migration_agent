@@ -15,6 +15,16 @@ Requirements:
   at least one `@@` hunk.
 - A valid patch string begins like this:
   `diff --git a/path/file.go b/path/file.go\n--- a/path/file.go\n+++ b/path/file.go\n@@ ... @@`
+- Every `@@ -oldStart,oldCount +newStart,newCount @@` count must exactly match
+  the context, removed, and added lines that follow it.
+- Build every hunk from the exact current content in `relevant_source_files`.
+  Unchanged context lines must be copied verbatim, including their order,
+  indentation, blank lines, and import ordering.
+- Do not silently reorder imports or rewrite any other unchanged text inside a
+  hunk. If text must move or change, represent it explicitly with `-` and `+`
+  lines. Never place an invented or reordered line behind the context prefix.
+- Hunk line numbers and old-side lines must describe the supplied current file,
+  not an assumed version from an earlier migration phase.
 - Every patch entry must modify exactly the file named by that entry.
 - Never wrap patches in Markdown code fences.
 - Do not add, delete, or rename files.

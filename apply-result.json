@@ -1,0 +1,127 @@
+{
+  "bundle_id": "migration-bundle-1ffdf30b80e80f76",
+  "status": "applied",
+  "applied_files": [
+    {
+      "file": "middleware/jwt/jwt.go",
+      "applied": true,
+      "additions": 7,
+      "deletions": 5
+    }
+  ],
+  "changed_files": [
+    "middleware/jwt/jwt.go"
+  ],
+  "git_diff": "diff --git a/middleware/jwt/jwt.go b/middleware/jwt/jwt.go\nindex 679b898..169ed81 100644\n--- a/middleware/jwt/jwt.go\n+++ b/middleware/jwt/jwt.go\n@@ -1,18 +1,20 @@\n package jwt\n \n import (\n+\t\"context\"\n \t\"net/http\"\n \n+\t\"github.com/cloudwego/hertz/pkg/app\"\n+\t\"github.com/cloudwego/hertz/pkg/common/utils\"\n \t\"github.com/dgrijalva/jwt-go\"\n-\t\"github.com/gin-gonic/gin\"\n \n \t\"github.com/EDDYCJY/go-gin-example/pkg/e\"\n \t\"github.com/EDDYCJY/go-gin-example/pkg/util\"\n )\n \n // JWT is jwt middleware\n-func JWT() gin.HandlerFunc {\n-\treturn func(c *gin.Context) {\n+func JWT() app.HandlerFunc {\n+\treturn func(ctx context.Context, c *app.RequestContext) {\n \t\tvar code int\n \t\tvar data interface{}\n \n@@ -33,7 +35,7 @@ func JWT() gin.HandlerFunc {\n \t\t}\n \n \t\tif code != e.SUCCESS {\n-\t\t\tc.JSON(http.StatusUnauthorized, gin.H{\n+\t\t\tc.JSON(http.StatusUnauthorized, utils.H{\n \t\t\t\t\"code\": code,\n \t\t\t\t\"msg\":  e.GetMsg(code),\n \t\t\t\t\"data\": data,\n@@ -43,6 +45,6 @@ func JWT() gin.HandlerFunc {\n \t\t\treturn\n \t\t}\n \n-\t\tc.Next()\n+\t\tc.Next(ctx)\n \t}\n }\n",
+  "rollback_performed": false,
+  "rollback_succeeded": null,
+  "command_results": [
+    {
+      "command": [
+        "git",
+        "rev-parse",
+        "--show-toplevel"
+      ],
+      "exit_code": 0,
+      "stdout": "C:/Users/lin1318/AppData/Local/Temp/gin-stage11-649a09e1ccf649b3941394bc86908637\n",
+      "stderr": "",
+      "duration_seconds": 0.02972330000193324,
+      "timed_out": false
+    },
+    {
+      "command": [
+        "git",
+        "status",
+        "--porcelain=v1",
+        "-z",
+        "--untracked-files=all"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "duration_seconds": 0.030556900004739873,
+      "timed_out": false
+    },
+    {
+      "command": [
+        "git",
+        "apply",
+        "--check",
+        "C:\\Users\\lin1318\\AppData\\Local\\Temp\\migration-bundle-c3aqfeu3.patch"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "duration_seconds": 0.027878900000359863,
+      "timed_out": false
+    },
+    {
+      "command": [
+        "git",
+        "apply",
+        "C:\\Users\\lin1318\\AppData\\Local\\Temp\\migration-bundle-c3aqfeu3.patch"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "duration_seconds": 0.03334930000710301,
+      "timed_out": false
+    },
+    {
+      "command": [
+        "git",
+        "apply",
+        "--reverse",
+        "--check",
+        "C:\\Users\\lin1318\\AppData\\Local\\Temp\\migration-bundle-c3aqfeu3.patch"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "duration_seconds": 0.02609650000522379,
+      "timed_out": false
+    },
+    {
+      "command": [
+        "git",
+        "status",
+        "--porcelain=v1",
+        "-z",
+        "--untracked-files=all"
+      ],
+      "exit_code": 0,
+      "stdout": " M middleware/jwt/jwt.go\u0000",
+      "stderr": "",
+      "duration_seconds": 0.034310399991227314,
+      "timed_out": false
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--",
+        "middleware/jwt/jwt.go"
+      ],
+      "exit_code": 0,
+      "stdout": "diff --git a/middleware/jwt/jwt.go b/middleware/jwt/jwt.go\nindex 679b898..169ed81 100644\n--- a/middleware/jwt/jwt.go\n+++ b/middleware/jwt/jwt.go\n@@ -1,18 +1,20 @@\n package jwt\n \n import (\n+\t\"context\"\n \t\"net/http\"\n \n+\t\"github.com/cloudwego/hertz/pkg/app\"\n+\t\"github.com/cloudwego/hertz/pkg/common/utils\"\n \t\"github.com/dgrijalva/jwt-go\"\n-\t\"github.com/gin-gonic/gin\"\n \n \t\"github.com/EDDYCJY/go-gin-example/pkg/e\"\n \t\"github.com/EDDYCJY/go-gin-example/pkg/util\"\n )\n \n // JWT is jwt middleware\n-func JWT() gin.HandlerFunc {\n-\treturn func(c *gin.Context) {\n+func JWT() app.HandlerFunc {\n+\treturn func(ctx context.Context, c *app.RequestContext) {\n \t\tvar code int\n \t\tvar data interface{}\n \n@@ -33,7 +35,7 @@ func JWT() gin.HandlerFunc {\n \t\t}\n \n \t\tif code != e.SUCCESS {\n-\t\t\tc.JSON(http.StatusUnauthorized, gin.H{\n+\t\t\tc.JSON(http.StatusUnauthorized, utils.H{\n \t\t\t\t\"code\": code,\n \t\t\t\t\"msg\":  e.GetMsg(code),\n \t\t\t\t\"data\": data,\n@@ -43,6 +45,6 @@ func JWT() gin.HandlerFunc {\n \t\t\treturn\n \t\t}\n \n-\t\tc.Next()\n+\t\tc.Next(ctx)\n \t}\n }\n",
+      "stderr": "",
+      "duration_seconds": 0.03722500000731088,
+      "timed_out": false
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--numstat",
+        "--",
+        "middleware/jwt/jwt.go"
+      ],
+      "exit_code": 0,
+      "stdout": "7\t5\tmiddleware/jwt/jwt.go\n",
+      "stderr": "",
+      "duration_seconds": 0.027358899998944253,
+      "timed_out": false
+    }
+  ],
+  "errors": []
+}

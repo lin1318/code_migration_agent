@@ -163,6 +163,7 @@ def test_bundle_prompt_is_template_backed(bundle_fixture) -> None:
 
     assert "Generate one migration bundle only" in prompt
     assert "Never invent Hertz APIs" in prompt
+    assert "Unchanged context lines must be copied verbatim" in prompt
     assert '"allowed_files": [' in prompt
     assert "router.go" in prompt
 
@@ -287,6 +288,149 @@ def test_patch_format_error_identifies_file_and_first_line(bundle_fixture) -> No
         ProposalValidationError,
         match="invalid patch for 'router.go'.*Here is the patch",
     ):
+        validate_bundle_proposal(invalid, bundle)
+
+
+def test_incorrect_hunk_counts_are_rejected(bundle_fixture) -> None:
+    _, _, _, bundle, _ = bundle_fixture
+    generated = proposal(bundle.bundle_id)
+    invalid_patch = generated.patches[0].patch.replace(
+        "@@ -3,3 +3,3 @@",
+        "@@ -3,9 +3,9 @@",
+    )
+    invalid = generated.model_copy(
+        update={
+            "patches": [BundleFilePatch(file="router.go", patch=invalid_patch)]
+        }
+    )
+
+    with pytest.raises(ProposalValidationError, match="hunk line counts"):
+        validate_bundle_proposal(invalid, bundle)
+
+
+def test_execution_deterministically_corrects_model_hunk_counts(
+    bundle_fixture,
+) -> None:
+    repository, inspection, plan, bundle, registry = bundle_fixture
+    generated = proposal(bundle.bundle_id)
+    wrong = generated.model_copy(
+        update={
+            "patches": [
+                generated.patches[0].model_copy(
+                    update={
+                        "patch": generated.patches[0].patch.replace(
+                            "@@ -3,3 +3,3 @@",
+                            "@@ -3,12 +3,12 @@",
+                        )
+                    }
+                )
+            ]
+        }
+    )
+
+    result = execute_bundle(
+        repository,
+        inspection,
+        plan,
+        bundle,
+        registry,
+        FakeBundleModelClient(wrong),
+    )
+
+    assert "@@ -3,3 +3,3 @@" in result.proposal.patches[0].patch
+
+
+def test_execution_rejects_reordered_unchanged_patch_context(
+    bundle_fixture,
+) -> None:
+    repository, inspection, plan, bundle, registry = bundle_fixture
+    generated = proposal(bundle.bundle_id)
+    invalid_patch = generated.patches[0].patch.replace(
+        " func Routes(r *gin.Engine) {\n"
+        '-    r.GET("/ping", Ping)\n',
+        '-    r.GET("/ping", Ping)\n'
+        " func Routes(r *gin.Engine) {\n",
+    )
+    invalid = generated.model_copy(
+        update={
+            "patches": [
+                BundleFilePatch(file="router.go", patch=invalid_patch)
+            ]
+        }
+    )
+
+    with pytest.raises(
+        ProposalValidationError,
+        match="old-side content does not match current source",
+    ):
+        execute_bundle(
+            repository,
+            inspection,
+            plan,
+            bundle,
+            registry,
+            FakeBundleModelClient(invalid),
+        )
+
+
+def test_execution_retries_source_mismatch_once_with_current_source(
+    bundle_fixture,
+) -> None:
+    repository, inspection, plan, bundle, registry = bundle_fixture
+    valid = proposal(bundle.bundle_id)
+    invalid_patch = valid.patches[0].patch.replace(
+        " func Routes(r *gin.Engine) {\n"
+        '-    r.GET("/ping", Ping)\n',
+        '-    r.GET("/ping", Ping)\n'
+        " func Routes(r *gin.Engine) {\n",
+    )
+    invalid = valid.model_copy(
+        update={
+            "patches": [
+                BundleFilePatch(file="router.go", patch=invalid_patch)
+            ]
+        }
+    )
+
+    class CorrectingModel:
+        model_name = "correcting-model"
+
+        def __init__(self) -> None:
+            self.calls = []
+
+        def generate_bundle_patch(self, context, prompt):
+            self.calls.append((context, prompt))
+            return invalid if len(self.calls) == 1 else valid
+
+    model = CorrectingModel()
+    result = execute_bundle(
+        repository,
+        inspection,
+        plan,
+        bundle,
+        registry,
+        model,
+    )
+
+    assert result.proposal == valid
+    assert len(model.calls) == 2
+    assert "CORRECTION REQUIRED" in model.calls[1][1]
+    assert '"router.go"' in model.calls[1][1]
+
+
+def test_context_free_hunk_is_rejected(bundle_fixture) -> None:
+    _, _, _, bundle, _ = bundle_fixture
+    generated = proposal(bundle.bundle_id)
+    patch = (
+        "diff --git a/router.go b/router.go\n"
+        "--- a/router.go\n+++ b/router.go\n"
+        "@@ -1,1 +1,1 @@\n-old\n+new\n"
+    )
+    invalid = generated.model_copy(
+        update={"patches": [BundleFilePatch(file="router.go", patch=patch)]}
+    )
+
+    with pytest.raises(ProposalValidationError, match="unchanged context"):
         validate_bundle_proposal(invalid, bundle)
 
 

@@ -1,0 +1,1263 @@
+{
+  "repository_job": {
+    "job_id": "migration-job-99047f96108d577e",
+    "repository_path": "C:\\Users\\lin1318\\AppData\\Local\\Temp\\gin-stage11-649a09e1ccf649b3941394bc86908637",
+    "module_path": "github.com/EDDYCJY/go-gin-example",
+    "framework": "github.com/gin-gonic/gin",
+    "target_framework": "github.com/cloudwego/hertz"
+  },
+  "dependency_graph": {
+    "nodes": [
+      {
+        "node_id": "concern:gin.context.abort",
+        "node_type": "migration_concern",
+        "label": "gin.context.abort",
+        "file": null
+      },
+      {
+        "node_id": "concern:gin.context.bind",
+        "node_type": "migration_concern",
+        "label": "gin.context.bind",
+        "file": null
+      },
+      {
+        "node_id": "concern:gin.context.json",
+        "node_type": "migration_concern",
+        "label": "gin.context.json",
+        "file": null
+      },
+      {
+        "node_id": "concern:gin.context.next",
+        "node_type": "migration_concern",
+        "label": "gin.context.next",
+        "file": null
+      },
+      {
+        "node_id": "concern:gin.context.param",
+        "node_type": "migration_concern",
+        "label": "gin.context.param",
+        "file": null
+      },
+      {
+        "node_id": "concern:gin.context.post-form",
+        "node_type": "migration_concern",
+        "label": "gin.context.post-form",
+        "file": null
+      },
+      {
+        "node_id": "concern:gin.context.query",
+        "node_type": "migration_concern",
+        "label": "gin.context.query",
+        "file": null
+      },
+      {
+        "node_id": "concern:gin.context.save-uploaded-file",
+        "node_type": "migration_concern",
+        "label": "gin.context.save-uploaded-file",
+        "file": null
+      },
+      {
+        "node_id": "concern:gin.engine.get",
+        "node_type": "migration_concern",
+        "label": "gin.engine.get",
+        "file": null
+      },
+      {
+        "node_id": "concern:gin.engine.group",
+        "node_type": "migration_concern",
+        "label": "gin.engine.group",
+        "file": null
+      },
+      {
+        "node_id": "concern:gin.engine.post",
+        "node_type": "migration_concern",
+        "label": "gin.engine.post",
+        "file": null
+      },
+      {
+        "node_id": "concern:gin.engine.staticfs",
+        "node_type": "migration_concern",
+        "label": "gin.engine.staticfs",
+        "file": null
+      },
+      {
+        "node_id": "concern:gin.engine.use",
+        "node_type": "migration_concern",
+        "label": "gin.engine.use",
+        "file": null
+      },
+      {
+        "node_id": "concern:gin.logger",
+        "node_type": "migration_concern",
+        "label": "gin.logger",
+        "file": null
+      },
+      {
+        "node_id": "concern:gin.new",
+        "node_type": "migration_concern",
+        "label": "gin.new",
+        "file": null
+      },
+      {
+        "node_id": "concern:gin.recovery",
+        "node_type": "migration_concern",
+        "label": "gin.recovery",
+        "file": null
+      },
+      {
+        "node_id": "concern:gin.router_group.delete",
+        "node_type": "migration_concern",
+        "label": "gin.router_group.delete",
+        "file": null
+      },
+      {
+        "node_id": "concern:gin.router_group.get",
+        "node_type": "migration_concern",
+        "label": "gin.router_group.get",
+        "file": null
+      },
+      {
+        "node_id": "concern:gin.router_group.post",
+        "node_type": "migration_concern",
+        "label": "gin.router_group.post",
+        "file": null
+      },
+      {
+        "node_id": "concern:gin.router_group.put",
+        "node_type": "migration_concern",
+        "label": "gin.router_group.put",
+        "file": null
+      },
+      {
+        "node_id": "concern:gin.router_group.use",
+        "node_type": "migration_concern",
+        "label": "gin.router_group.use",
+        "file": null
+      },
+      {
+        "node_id": "concern:github.com/gin-gonic/gin.SetMode",
+        "node_type": "migration_concern",
+        "label": "github.com/gin-gonic/gin.SetMode",
+        "file": null
+      },
+      {
+        "node_id": "external:github.com/swaggo/gin-swagger",
+        "node_type": "external_package",
+        "label": "github.com/swaggo/gin-swagger",
+        "file": null
+      },
+      {
+        "node_id": "file:main.go",
+        "node_type": "source_file",
+        "label": "main.go",
+        "file": "main.go"
+      },
+      {
+        "node_id": "file:middleware/jwt/jwt.go",
+        "node_type": "source_file",
+        "label": "middleware/jwt/jwt.go",
+        "file": "middleware/jwt/jwt.go"
+      },
+      {
+        "node_id": "file:pkg/app/form.go",
+        "node_type": "source_file",
+        "label": "pkg/app/form.go",
+        "file": "pkg/app/form.go"
+      },
+      {
+        "node_id": "file:pkg/app/response.go",
+        "node_type": "source_file",
+        "label": "pkg/app/response.go",
+        "file": "pkg/app/response.go"
+      },
+      {
+        "node_id": "file:pkg/util/pagination.go",
+        "node_type": "source_file",
+        "label": "pkg/util/pagination.go",
+        "file": "pkg/util/pagination.go"
+      },
+      {
+        "node_id": "file:routers/api/auth.go",
+        "node_type": "source_file",
+        "label": "routers/api/auth.go",
+        "file": "routers/api/auth.go"
+      },
+      {
+        "node_id": "file:routers/api/upload.go",
+        "node_type": "source_file",
+        "label": "routers/api/upload.go",
+        "file": "routers/api/upload.go"
+      },
+      {
+        "node_id": "file:routers/api/v1/article.go",
+        "node_type": "source_file",
+        "label": "routers/api/v1/article.go",
+        "file": "routers/api/v1/article.go"
+      },
+      {
+        "node_id": "file:routers/api/v1/tag.go",
+        "node_type": "source_file",
+        "label": "routers/api/v1/tag.go",
+        "file": "routers/api/v1/tag.go"
+      },
+      {
+        "node_id": "file:routers/router.go",
+        "node_type": "source_file",
+        "label": "routers/router.go",
+        "file": "routers/router.go"
+      },
+      {
+        "node_id": "symbol:github.com/EDDYCJY/go-gin-example/middleware/jwt.JWT",
+        "node_type": "framework_symbol",
+        "label": "github.com/EDDYCJY/go-gin-example/middleware/jwt.JWT",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/EDDYCJY/go-gin-example/pkg/app.BindAndValid",
+        "node_type": "framework_symbol",
+        "label": "github.com/EDDYCJY/go-gin-example/pkg/app.BindAndValid",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/EDDYCJY/go-gin-example/pkg/util.GetPage",
+        "node_type": "framework_symbol",
+        "label": "github.com/EDDYCJY/go-gin-example/pkg/util.GetPage",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/EDDYCJY/go-gin-example/routers.InitRouter",
+        "node_type": "framework_symbol",
+        "label": "github.com/EDDYCJY/go-gin-example/routers.InitRouter",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/EDDYCJY/go-gin-example/routers/api.GetAuth",
+        "node_type": "framework_symbol",
+        "label": "github.com/EDDYCJY/go-gin-example/routers/api.GetAuth",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/EDDYCJY/go-gin-example/routers/api.UploadImage",
+        "node_type": "framework_symbol",
+        "label": "github.com/EDDYCJY/go-gin-example/routers/api.UploadImage",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.AddArticle",
+        "node_type": "framework_symbol",
+        "label": "github.com/EDDYCJY/go-gin-example/routers/api/v1.AddArticle",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.AddTag",
+        "node_type": "framework_symbol",
+        "label": "github.com/EDDYCJY/go-gin-example/routers/api/v1.AddTag",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.DeleteArticle",
+        "node_type": "framework_symbol",
+        "label": "github.com/EDDYCJY/go-gin-example/routers/api/v1.DeleteArticle",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.DeleteTag",
+        "node_type": "framework_symbol",
+        "label": "github.com/EDDYCJY/go-gin-example/routers/api/v1.DeleteTag",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.EditArticle",
+        "node_type": "framework_symbol",
+        "label": "github.com/EDDYCJY/go-gin-example/routers/api/v1.EditArticle",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.EditTag",
+        "node_type": "framework_symbol",
+        "label": "github.com/EDDYCJY/go-gin-example/routers/api/v1.EditTag",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.ExportTag",
+        "node_type": "framework_symbol",
+        "label": "github.com/EDDYCJY/go-gin-example/routers/api/v1.ExportTag",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.GenerateArticlePoster",
+        "node_type": "framework_symbol",
+        "label": "github.com/EDDYCJY/go-gin-example/routers/api/v1.GenerateArticlePoster",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.GetArticle",
+        "node_type": "framework_symbol",
+        "label": "github.com/EDDYCJY/go-gin-example/routers/api/v1.GetArticle",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.GetArticles",
+        "node_type": "framework_symbol",
+        "label": "github.com/EDDYCJY/go-gin-example/routers/api/v1.GetArticles",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.GetTags",
+        "node_type": "framework_symbol",
+        "label": "github.com/EDDYCJY/go-gin-example/routers/api/v1.GetTags",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.ImportTag",
+        "node_type": "framework_symbol",
+        "label": "github.com/EDDYCJY/go-gin-example/routers/api/v1.ImportTag",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/gin-gonic/gin.(*Context).Abort",
+        "node_type": "framework_symbol",
+        "label": "github.com/gin-gonic/gin.(*Context).Abort",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/gin-gonic/gin.(*Context).Bind",
+        "node_type": "framework_symbol",
+        "label": "github.com/gin-gonic/gin.(*Context).Bind",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/gin-gonic/gin.(*Context).JSON",
+        "node_type": "framework_symbol",
+        "label": "github.com/gin-gonic/gin.(*Context).JSON",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/gin-gonic/gin.(*Context).Next",
+        "node_type": "framework_symbol",
+        "label": "github.com/gin-gonic/gin.(*Context).Next",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/gin-gonic/gin.(*Context).Param",
+        "node_type": "framework_symbol",
+        "label": "github.com/gin-gonic/gin.(*Context).Param",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/gin-gonic/gin.(*Context).PostForm",
+        "node_type": "framework_symbol",
+        "label": "github.com/gin-gonic/gin.(*Context).PostForm",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/gin-gonic/gin.(*Context).Query",
+        "node_type": "framework_symbol",
+        "label": "github.com/gin-gonic/gin.(*Context).Query",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/gin-gonic/gin.(*Context).SaveUploadedFile",
+        "node_type": "framework_symbol",
+        "label": "github.com/gin-gonic/gin.(*Context).SaveUploadedFile",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/gin-gonic/gin.(*Engine).GET",
+        "node_type": "framework_symbol",
+        "label": "github.com/gin-gonic/gin.(*Engine).GET",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/gin-gonic/gin.(*Engine).Group",
+        "node_type": "framework_symbol",
+        "label": "github.com/gin-gonic/gin.(*Engine).Group",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/gin-gonic/gin.(*Engine).POST",
+        "node_type": "framework_symbol",
+        "label": "github.com/gin-gonic/gin.(*Engine).POST",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/gin-gonic/gin.(*Engine).StaticFS",
+        "node_type": "framework_symbol",
+        "label": "github.com/gin-gonic/gin.(*Engine).StaticFS",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/gin-gonic/gin.(*Engine).Use",
+        "node_type": "framework_symbol",
+        "label": "github.com/gin-gonic/gin.(*Engine).Use",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/gin-gonic/gin.(*RouterGroup).DELETE",
+        "node_type": "framework_symbol",
+        "label": "github.com/gin-gonic/gin.(*RouterGroup).DELETE",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/gin-gonic/gin.(*RouterGroup).GET",
+        "node_type": "framework_symbol",
+        "label": "github.com/gin-gonic/gin.(*RouterGroup).GET",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/gin-gonic/gin.(*RouterGroup).POST",
+        "node_type": "framework_symbol",
+        "label": "github.com/gin-gonic/gin.(*RouterGroup).POST",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/gin-gonic/gin.(*RouterGroup).PUT",
+        "node_type": "framework_symbol",
+        "label": "github.com/gin-gonic/gin.(*RouterGroup).PUT",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/gin-gonic/gin.(*RouterGroup).Use",
+        "node_type": "framework_symbol",
+        "label": "github.com/gin-gonic/gin.(*RouterGroup).Use",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/gin-gonic/gin.Context",
+        "node_type": "framework_symbol",
+        "label": "github.com/gin-gonic/gin.Context",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/gin-gonic/gin.H",
+        "node_type": "framework_symbol",
+        "label": "github.com/gin-gonic/gin.H",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/gin-gonic/gin.HandlerFunc",
+        "node_type": "framework_symbol",
+        "label": "github.com/gin-gonic/gin.HandlerFunc",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/gin-gonic/gin.Logger",
+        "node_type": "framework_symbol",
+        "label": "github.com/gin-gonic/gin.Logger",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/gin-gonic/gin.New",
+        "node_type": "framework_symbol",
+        "label": "github.com/gin-gonic/gin.New",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/gin-gonic/gin.Recovery",
+        "node_type": "framework_symbol",
+        "label": "github.com/gin-gonic/gin.Recovery",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/gin-gonic/gin.SetMode",
+        "node_type": "framework_symbol",
+        "label": "github.com/gin-gonic/gin.SetMode",
+        "file": null
+      },
+      {
+        "node_id": "symbol:github.com/swaggo/gin-swagger.WrapHandler",
+        "node_type": "framework_symbol",
+        "label": "github.com/swaggo/gin-swagger.WrapHandler",
+        "file": null
+      }
+    ],
+    "edges": [
+      {
+        "source": "file:main.go",
+        "target": "symbol:github.com/EDDYCJY/go-gin-example/routers.InitRouter",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:main.go",
+        "target": "symbol:github.com/gin-gonic/gin.SetMode",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:middleware/jwt/jwt.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*Context).Abort",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:middleware/jwt/jwt.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*Context).JSON",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:middleware/jwt/jwt.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*Context).JSON",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:middleware/jwt/jwt.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*Context).Next",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:middleware/jwt/jwt.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*Context).Query",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:middleware/jwt/jwt.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*Context).Query",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:middleware/jwt/jwt.go",
+        "target": "symbol:github.com/gin-gonic/gin.Context",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:middleware/jwt/jwt.go",
+        "target": "symbol:github.com/gin-gonic/gin.H",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:middleware/jwt/jwt.go",
+        "target": "symbol:github.com/gin-gonic/gin.HandlerFunc",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:pkg/app/form.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*Context).Bind",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:pkg/app/form.go",
+        "target": "symbol:github.com/gin-gonic/gin.Context",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:pkg/app/response.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*Context).JSON",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:pkg/app/response.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*Context).JSON",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:pkg/app/response.go",
+        "target": "symbol:github.com/gin-gonic/gin.Context",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:pkg/util/pagination.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*Context).Query",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:pkg/util/pagination.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*Context).Query",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:pkg/util/pagination.go",
+        "target": "symbol:github.com/gin-gonic/gin.Context",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:routers/api/auth.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*Context).PostForm",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/api/auth.go",
+        "target": "symbol:github.com/gin-gonic/gin.Context",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:routers/api/upload.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*Context).SaveUploadedFile",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/api/upload.go",
+        "target": "symbol:github.com/gin-gonic/gin.Context",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:routers/api/v1/article.go",
+        "target": "symbol:github.com/EDDYCJY/go-gin-example/pkg/app.BindAndValid",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/api/v1/article.go",
+        "target": "symbol:github.com/EDDYCJY/go-gin-example/pkg/util.GetPage",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/api/v1/article.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*Context).Param",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:routers/api/v1/article.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*Context).Param",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/api/v1/article.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*Context).PostForm",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/api/v1/article.go",
+        "target": "symbol:github.com/gin-gonic/gin.Context",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:routers/api/v1/tag.go",
+        "target": "symbol:github.com/EDDYCJY/go-gin-example/pkg/app.BindAndValid",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/api/v1/tag.go",
+        "target": "symbol:github.com/EDDYCJY/go-gin-example/pkg/util.GetPage",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/api/v1/tag.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*Context).Param",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:routers/api/v1/tag.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*Context).Param",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/api/v1/tag.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*Context).PostForm",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/api/v1/tag.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*Context).Query",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:routers/api/v1/tag.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*Context).Query",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/api/v1/tag.go",
+        "target": "symbol:github.com/gin-gonic/gin.Context",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/EDDYCJY/go-gin-example/middleware/jwt.JWT",
+        "edge_type": "middleware_reference"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/EDDYCJY/go-gin-example/routers/api.GetAuth",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/EDDYCJY/go-gin-example/routers/api.UploadImage",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.AddArticle",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.AddTag",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.DeleteArticle",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.DeleteTag",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.EditArticle",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.EditTag",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.ExportTag",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.GenerateArticlePoster",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.GetArticle",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.GetArticles",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.GetTags",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.ImportTag",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*Engine).GET",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*Engine).Group",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*Engine).POST",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*Engine).StaticFS",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*Engine).Use",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*RouterGroup).DELETE",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*RouterGroup).GET",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*RouterGroup).POST",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*RouterGroup).PUT",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/gin-gonic/gin.(*RouterGroup).Use",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/gin-gonic/gin.Logger",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/gin-gonic/gin.New",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/gin-gonic/gin.New",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/gin-gonic/gin.Recovery",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "file:routers/router.go",
+        "target": "symbol:github.com/swaggo/gin-swagger.WrapHandler",
+        "edge_type": "handler_reference"
+      },
+      {
+        "source": "symbol:github.com/EDDYCJY/go-gin-example/middleware/jwt.JWT",
+        "target": "file:middleware/jwt/jwt.go",
+        "edge_type": "symbol_definition"
+      },
+      {
+        "source": "symbol:github.com/EDDYCJY/go-gin-example/pkg/app.BindAndValid",
+        "target": "file:pkg/app/form.go",
+        "edge_type": "symbol_definition"
+      },
+      {
+        "source": "symbol:github.com/EDDYCJY/go-gin-example/pkg/util.GetPage",
+        "target": "file:pkg/util/pagination.go",
+        "edge_type": "symbol_definition"
+      },
+      {
+        "source": "symbol:github.com/EDDYCJY/go-gin-example/routers.InitRouter",
+        "target": "file:routers/router.go",
+        "edge_type": "symbol_definition"
+      },
+      {
+        "source": "symbol:github.com/EDDYCJY/go-gin-example/routers/api.GetAuth",
+        "target": "file:routers/api/auth.go",
+        "edge_type": "symbol_definition"
+      },
+      {
+        "source": "symbol:github.com/EDDYCJY/go-gin-example/routers/api.UploadImage",
+        "target": "file:routers/api/upload.go",
+        "edge_type": "symbol_definition"
+      },
+      {
+        "source": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.AddArticle",
+        "target": "file:routers/api/v1/article.go",
+        "edge_type": "symbol_definition"
+      },
+      {
+        "source": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.AddTag",
+        "target": "file:routers/api/v1/tag.go",
+        "edge_type": "symbol_definition"
+      },
+      {
+        "source": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.DeleteArticle",
+        "target": "file:routers/api/v1/article.go",
+        "edge_type": "symbol_definition"
+      },
+      {
+        "source": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.DeleteTag",
+        "target": "file:routers/api/v1/tag.go",
+        "edge_type": "symbol_definition"
+      },
+      {
+        "source": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.EditArticle",
+        "target": "file:routers/api/v1/article.go",
+        "edge_type": "symbol_definition"
+      },
+      {
+        "source": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.EditTag",
+        "target": "file:routers/api/v1/tag.go",
+        "edge_type": "symbol_definition"
+      },
+      {
+        "source": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.ExportTag",
+        "target": "file:routers/api/v1/tag.go",
+        "edge_type": "symbol_definition"
+      },
+      {
+        "source": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.GenerateArticlePoster",
+        "target": "file:routers/api/v1/article.go",
+        "edge_type": "symbol_definition"
+      },
+      {
+        "source": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.GetArticle",
+        "target": "file:routers/api/v1/article.go",
+        "edge_type": "symbol_definition"
+      },
+      {
+        "source": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.GetArticles",
+        "target": "file:routers/api/v1/article.go",
+        "edge_type": "symbol_definition"
+      },
+      {
+        "source": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.GetTags",
+        "target": "file:routers/api/v1/tag.go",
+        "edge_type": "symbol_definition"
+      },
+      {
+        "source": "symbol:github.com/EDDYCJY/go-gin-example/routers/api/v1.ImportTag",
+        "target": "file:routers/api/v1/tag.go",
+        "edge_type": "symbol_definition"
+      },
+      {
+        "source": "symbol:github.com/gin-gonic/gin.(*Context).Abort",
+        "target": "concern:gin.context.abort",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "symbol:github.com/gin-gonic/gin.(*Context).Bind",
+        "target": "concern:gin.context.bind",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "symbol:github.com/gin-gonic/gin.(*Context).JSON",
+        "target": "concern:gin.context.json",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "symbol:github.com/gin-gonic/gin.(*Context).Next",
+        "target": "concern:gin.context.next",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "symbol:github.com/gin-gonic/gin.(*Context).Param",
+        "target": "concern:gin.context.param",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "symbol:github.com/gin-gonic/gin.(*Context).PostForm",
+        "target": "concern:gin.context.post-form",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "symbol:github.com/gin-gonic/gin.(*Context).Query",
+        "target": "concern:gin.context.query",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "symbol:github.com/gin-gonic/gin.(*Context).SaveUploadedFile",
+        "target": "concern:gin.context.save-uploaded-file",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "symbol:github.com/gin-gonic/gin.(*Engine).GET",
+        "target": "concern:gin.engine.get",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "symbol:github.com/gin-gonic/gin.(*Engine).Group",
+        "target": "concern:gin.engine.group",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "symbol:github.com/gin-gonic/gin.(*Engine).POST",
+        "target": "concern:gin.engine.post",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "symbol:github.com/gin-gonic/gin.(*Engine).StaticFS",
+        "target": "concern:gin.engine.staticfs",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "symbol:github.com/gin-gonic/gin.(*Engine).Use",
+        "target": "concern:gin.engine.use",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "symbol:github.com/gin-gonic/gin.(*RouterGroup).DELETE",
+        "target": "concern:gin.router_group.delete",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "symbol:github.com/gin-gonic/gin.(*RouterGroup).GET",
+        "target": "concern:gin.router_group.get",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "symbol:github.com/gin-gonic/gin.(*RouterGroup).POST",
+        "target": "concern:gin.router_group.post",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "symbol:github.com/gin-gonic/gin.(*RouterGroup).PUT",
+        "target": "concern:gin.router_group.put",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "symbol:github.com/gin-gonic/gin.(*RouterGroup).Use",
+        "target": "concern:gin.router_group.use",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "symbol:github.com/gin-gonic/gin.Logger",
+        "target": "concern:gin.logger",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "symbol:github.com/gin-gonic/gin.New",
+        "target": "concern:gin.new",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "symbol:github.com/gin-gonic/gin.Recovery",
+        "target": "concern:gin.recovery",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "symbol:github.com/gin-gonic/gin.SetMode",
+        "target": "concern:github.com/gin-gonic/gin.SetMode",
+        "edge_type": "framework_usage"
+      },
+      {
+        "source": "symbol:github.com/swaggo/gin-swagger.WrapHandler",
+        "target": "external:github.com/swaggo/gin-swagger",
+        "edge_type": "symbol_uses_package"
+      }
+    ],
+    "cycles": [],
+    "unreachable_node_ids": []
+  },
+  "bundles": [
+    {
+      "bundle_id": "migration-bundle-1ffdf30b80e80f76",
+      "files": [
+        "middleware/jwt/jwt.go"
+      ],
+      "framework_symbols": [
+        "github.com/gin-gonic/gin.(*Context).Abort",
+        "github.com/gin-gonic/gin.(*Context).JSON",
+        "github.com/gin-gonic/gin.(*Context).Next",
+        "github.com/gin-gonic/gin.(*Context).Query",
+        "github.com/gin-gonic/gin.Context",
+        "github.com/gin-gonic/gin.H",
+        "github.com/gin-gonic/gin.HandlerFunc"
+      ],
+      "migration_concerns": [
+        "context_operations",
+        "handler_signatures",
+        "responses"
+      ],
+      "external_dependencies": [],
+      "blocking_dependencies": [],
+      "depends_on": [],
+      "estimated_complexity": "medium"
+    },
+    {
+      "bundle_id": "migration-bundle-2873f79a86c0d8b3",
+      "files": [
+        "main.go"
+      ],
+      "framework_symbols": [
+        "github.com/EDDYCJY/go-gin-example/routers.InitRouter",
+        "github.com/gin-gonic/gin.SetMode"
+      ],
+      "migration_concerns": [
+        "framework_usage"
+      ],
+      "external_dependencies": [],
+      "blocking_dependencies": [],
+      "depends_on": [
+        "migration-bundle-4bb1f3889791d48e"
+      ],
+      "estimated_complexity": "low"
+    },
+    {
+      "bundle_id": "migration-bundle-4bb1f3889791d48e",
+      "files": [
+        "routers/router.go"
+      ],
+      "framework_symbols": [
+        "github.com/EDDYCJY/go-gin-example/middleware/jwt.JWT",
+        "github.com/EDDYCJY/go-gin-example/routers/api.GetAuth",
+        "github.com/EDDYCJY/go-gin-example/routers/api.UploadImage",
+        "github.com/EDDYCJY/go-gin-example/routers/api/v1.AddArticle",
+        "github.com/EDDYCJY/go-gin-example/routers/api/v1.AddTag",
+        "github.com/EDDYCJY/go-gin-example/routers/api/v1.DeleteArticle",
+        "github.com/EDDYCJY/go-gin-example/routers/api/v1.DeleteTag",
+        "github.com/EDDYCJY/go-gin-example/routers/api/v1.EditArticle",
+        "github.com/EDDYCJY/go-gin-example/routers/api/v1.EditTag",
+        "github.com/EDDYCJY/go-gin-example/routers/api/v1.ExportTag",
+        "github.com/EDDYCJY/go-gin-example/routers/api/v1.GenerateArticlePoster",
+        "github.com/EDDYCJY/go-gin-example/routers/api/v1.GetArticle",
+        "github.com/EDDYCJY/go-gin-example/routers/api/v1.GetArticles",
+        "github.com/EDDYCJY/go-gin-example/routers/api/v1.GetTags",
+        "github.com/EDDYCJY/go-gin-example/routers/api/v1.ImportTag",
+        "github.com/gin-gonic/gin.(*Engine).GET",
+        "github.com/gin-gonic/gin.(*Engine).Group",
+        "github.com/gin-gonic/gin.(*Engine).POST",
+        "github.com/gin-gonic/gin.(*Engine).StaticFS",
+        "github.com/gin-gonic/gin.(*Engine).Use",
+        "github.com/gin-gonic/gin.(*RouterGroup).DELETE",
+        "github.com/gin-gonic/gin.(*RouterGroup).GET",
+        "github.com/gin-gonic/gin.(*RouterGroup).POST",
+        "github.com/gin-gonic/gin.(*RouterGroup).PUT",
+        "github.com/gin-gonic/gin.(*RouterGroup).Use",
+        "github.com/gin-gonic/gin.Logger",
+        "github.com/gin-gonic/gin.New",
+        "github.com/gin-gonic/gin.Recovery",
+        "github.com/swaggo/gin-swagger.WrapHandler"
+      ],
+      "migration_concerns": [
+        "middleware",
+        "routing",
+        "server_bootstrap"
+      ],
+      "external_dependencies": [
+        {
+          "dependency_id": "dependency-9ba4ac3c915bd499",
+          "symbol": "github.com/swaggo/gin-swagger.WrapHandler",
+          "package_path": "github.com/swaggo/gin-swagger",
+          "module_path": "github.com/swaggo/gin-swagger",
+          "definition_file": "../../../../go/pkg/mod/github.com/swaggo/gin-swagger@v1.2.0/swagger.go",
+          "definition_line": 29,
+          "kind": "external_framework_bound",
+          "resolution": "replace_dependency",
+          "framework_bound": true,
+          "matching_rule_ids": [
+            "gin-swagger.wrap-handler"
+          ],
+          "replacement_package": "github.com/cloudwego/hertz/pkg/common/adaptor",
+          "parent_dependency_id": null,
+          "depth": 1,
+          "notes": "deterministic dependency replacement is available"
+        }
+      ],
+      "blocking_dependencies": [],
+      "depends_on": [
+        "migration-bundle-1ffdf30b80e80f76",
+        "migration-bundle-553e2e44978925ec",
+        "migration-bundle-a185cb8a0931c354"
+      ],
+      "estimated_complexity": "high"
+    },
+    {
+      "bundle_id": "migration-bundle-553e2e44978925ec",
+      "files": [
+        "routers/api/auth.go",
+        "routers/api/upload.go"
+      ],
+      "framework_symbols": [
+        "github.com/gin-gonic/gin.(*Context).PostForm",
+        "github.com/gin-gonic/gin.(*Context).SaveUploadedFile",
+        "github.com/gin-gonic/gin.Context"
+      ],
+      "migration_concerns": [
+        "handler_signatures"
+      ],
+      "external_dependencies": [],
+      "blocking_dependencies": [],
+      "depends_on": [],
+      "estimated_complexity": "medium"
+    },
+    {
+      "bundle_id": "migration-bundle-9138803a557909e9",
+      "files": [
+        "pkg/app/form.go",
+        "pkg/app/response.go"
+      ],
+      "framework_symbols": [
+        "github.com/gin-gonic/gin.(*Context).Bind",
+        "github.com/gin-gonic/gin.(*Context).JSON",
+        "github.com/gin-gonic/gin.Context"
+      ],
+      "migration_concerns": [
+        "context_operations",
+        "handler_signatures"
+      ],
+      "external_dependencies": [],
+      "blocking_dependencies": [],
+      "depends_on": [],
+      "estimated_complexity": "medium"
+    },
+    {
+      "bundle_id": "migration-bundle-a185cb8a0931c354",
+      "files": [
+        "routers/api/v1/article.go",
+        "routers/api/v1/tag.go"
+      ],
+      "framework_symbols": [
+        "github.com/EDDYCJY/go-gin-example/pkg/app.BindAndValid",
+        "github.com/EDDYCJY/go-gin-example/pkg/util.GetPage",
+        "github.com/gin-gonic/gin.(*Context).Param",
+        "github.com/gin-gonic/gin.(*Context).PostForm",
+        "github.com/gin-gonic/gin.(*Context).Query",
+        "github.com/gin-gonic/gin.Context"
+      ],
+      "migration_concerns": [
+        "context_operations",
+        "handler_signatures"
+      ],
+      "external_dependencies": [],
+      "blocking_dependencies": [],
+      "depends_on": [
+        "migration-bundle-9138803a557909e9",
+        "migration-bundle-d48b4984646591cc"
+      ],
+      "estimated_complexity": "medium"
+    },
+    {
+      "bundle_id": "migration-bundle-d48b4984646591cc",
+      "files": [
+        "pkg/util/pagination.go"
+      ],
+      "framework_symbols": [
+        "github.com/gin-gonic/gin.(*Context).Query",
+        "github.com/gin-gonic/gin.Context"
+      ],
+      "migration_concerns": [
+        "context_operations",
+        "handler_signatures"
+      ],
+      "external_dependencies": [],
+      "blocking_dependencies": [],
+      "depends_on": [],
+      "estimated_complexity": "low"
+    }
+  ],
+  "bundle_graph": {
+    "nodes": [
+      "migration-bundle-1ffdf30b80e80f76",
+      "migration-bundle-2873f79a86c0d8b3",
+      "migration-bundle-4bb1f3889791d48e",
+      "migration-bundle-553e2e44978925ec",
+      "migration-bundle-9138803a557909e9",
+      "migration-bundle-a185cb8a0931c354",
+      "migration-bundle-d48b4984646591cc"
+    ],
+    "edges": [
+      {
+        "source_bundle_id": "migration-bundle-2873f79a86c0d8b3",
+        "target_bundle_id": "migration-bundle-4bb1f3889791d48e"
+      },
+      {
+        "source_bundle_id": "migration-bundle-4bb1f3889791d48e",
+        "target_bundle_id": "migration-bundle-1ffdf30b80e80f76"
+      },
+      {
+        "source_bundle_id": "migration-bundle-4bb1f3889791d48e",
+        "target_bundle_id": "migration-bundle-553e2e44978925ec"
+      },
+      {
+        "source_bundle_id": "migration-bundle-4bb1f3889791d48e",
+        "target_bundle_id": "migration-bundle-a185cb8a0931c354"
+      },
+      {
+        "source_bundle_id": "migration-bundle-a185cb8a0931c354",
+        "target_bundle_id": "migration-bundle-9138803a557909e9"
+      },
+      {
+        "source_bundle_id": "migration-bundle-a185cb8a0931c354",
+        "target_bundle_id": "migration-bundle-d48b4984646591cc"
+      }
+    ],
+    "cycles": []
+  },
+  "ready_bundle_ordering": [
+    "migration-bundle-1ffdf30b80e80f76",
+    "migration-bundle-553e2e44978925ec",
+    "migration-bundle-9138803a557909e9",
+    "migration-bundle-d48b4984646591cc",
+    "migration-bundle-a185cb8a0931c354",
+    "migration-bundle-4bb1f3889791d48e",
+    "migration-bundle-2873f79a86c0d8b3"
+  ]
+}

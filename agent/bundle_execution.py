@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from string import Template
 from typing import Protocol
@@ -22,7 +23,11 @@ from agent.execution.models import (
     RelevantLineRange,
     RelevantSourceFile,
 )
-from agent.execution.validator import validate_patch_document
+from agent.execution.validator import (
+    normalize_patch_hunk_counts,
+    validate_patch_document,
+    validate_patch_old_content,
+)
 from knowledge.registry import RuleRegistry
 from models.bundle_execution import (
     BundleExecutionResult,
@@ -175,6 +180,8 @@ def build_bundle_prompt(context: MigrationBundleContext) -> str:
 def validate_bundle_proposal(
     proposal: BundlePatchProposal,
     bundle: MigrationBundle,
+    *,
+    source_contents: dict[str, str] | None = None,
 ) -> BundlePatchProposal:
     if proposal.bundle_id != bundle.bundle_id:
         raise ProposalValidationError(
@@ -208,9 +215,21 @@ def validate_bundle_proposal(
     if proposal.status == BundlePatchStatus.PATCH_GENERATED:
         for item in proposal.patches:
             _validate_bundle_patch(item.file, item.patch, allowed)
+            if source_contents is not None:
+                validate_patch_old_content(
+                    item.patch,
+                    source=source_contents[item.file],
+                    expected_file=item.file,
+                )
     elif proposal.patches:
         for item in proposal.patches:
             _validate_bundle_patch(item.file, item.patch, allowed)
+            if source_contents is not None:
+                validate_patch_old_content(
+                    item.patch,
+                    source=source_contents[item.file],
+                    expected_file=item.file,
+                )
     return proposal
 
 
@@ -259,8 +278,41 @@ def execute_bundle(
         completed_bundles=completed_bundles,
     )
     prompt = build_bundle_prompt(context)
-    proposal = model_client.generate_bundle_patch(context, prompt)
-    validate_bundle_proposal(proposal, bundle)
+    source_contents = {
+        source.path: source.content
+        for source in context.relevant_source_files
+    }
+    proposal: BundlePatchProposal | None = None
+    for attempt in range(2):
+        proposal = model_client.generate_bundle_patch(context, prompt)
+        proposal = proposal.model_copy(
+            update={
+                "patches": [
+                    item.model_copy(
+                        update={
+                            "patch": normalize_patch_hunk_counts(item.patch)
+                        }
+                    )
+                    for item in proposal.patches
+                ]
+            }
+        )
+        try:
+            validate_bundle_proposal(
+                proposal,
+                bundle,
+                source_contents=source_contents,
+            )
+            break
+        except ProposalValidationError as error:
+            if error.details.operation != "validate_patch_source" or attempt == 1:
+                raise
+            prompt = _source_correction_prompt(
+                prompt,
+                error,
+                source_contents,
+            )
+    assert proposal is not None
     return BundleExecutionResult(
         bundle_id=bundle.bundle_id,
         allowed_file_count=len(context.allowed_files),
@@ -276,6 +328,23 @@ def execute_bundle(
         prompt_size=len(prompt),
         model_used=model_client.model_name,
         proposal=proposal,
+    )
+
+
+def _source_correction_prompt(
+    original_prompt: str,
+    error: ProposalValidationError,
+    source_contents: dict[str, str],
+) -> str:
+    return (
+        original_prompt
+        + "\n\nCORRECTION REQUIRED:\n"
+        + "The previous proposal was rejected by deterministic validation: "
+        + error.details.message
+        + "\nGenerate the proposal again from the exact current source snapshot "
+        + "below. Do not reuse or repair the previous diff. Copy every "
+        + "unchanged context line verbatim.\n"
+        + json.dumps(source_contents, ensure_ascii=False, indent=2)
     )
 
 

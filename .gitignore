@@ -219,3 +219,6 @@ __marimo__/
 
 # Vendored dependencies in the Gin example are restored from go.mod/go.sum.
 examples/go-gin-example/vendor/
+
+# Generated migration run artifacts
+output/migration/

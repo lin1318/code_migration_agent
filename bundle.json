@@ -1,0 +1,30 @@
+{
+    "bundle_id":  "migration-bundle-1ffdf30b80e80f76",
+    "files":  [
+                  "middleware/jwt/jwt.go"
+              ],
+    "framework_symbols":  [
+                              "github.com/gin-gonic/gin.(*Context).Abort",
+                              "github.com/gin-gonic/gin.(*Context).JSON",
+                              "github.com/gin-gonic/gin.(*Context).Next",
+                              "github.com/gin-gonic/gin.(*Context).Query",
+                              "github.com/gin-gonic/gin.Context",
+                              "github.com/gin-gonic/gin.H",
+                              "github.com/gin-gonic/gin.HandlerFunc"
+                          ],
+    "migration_concerns":  [
+                               "context_operations",
+                               "handler_signatures",
+                               "responses"
+                           ],
+    "external_dependencies":  [
+
+                              ],
+    "blocking_dependencies":  [
+
+                              ],
+    "depends_on":  [
+
+                   ],
+    "estimated_complexity":  "medium"
+}
