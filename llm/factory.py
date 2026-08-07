@@ -58,3 +58,16 @@ def create_bundle_model_client(
         "configure_model",
         f"unsupported PATCH_MODEL_PROVIDER: {selected_provider}",
     )
+
+
+def create_file_bundle_model_client(
+    *,
+    provider: str | None = None,
+    model_name: str | None = None,
+):
+    """Create the provider used for deterministic one-file bundles."""
+
+    return create_bundle_model_client(
+        provider=provider,
+        model_name=model_name,
+    )

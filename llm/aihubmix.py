@@ -10,6 +10,10 @@ from agent.execution.errors import ModelInvocationError
 from agent.execution.models import MigrationTaskContext
 from llm.config import load_project_environment
 from models.bundle_execution import BundlePatchProposal, MigrationBundleContext
+from models.file_bundle_execution import (
+    FileBundleExecutionContext,
+    FilePatchProposal,
+)
 from models.patch_proposal import PatchProposal
 
 DEFAULT_BASE_URL = "https://aihubmix.com/v1"
@@ -154,5 +158,56 @@ class AiHubMixModelClient:
             raise ModelInvocationError(
                 "generate_bundle_patch",
                 f"bundle patch request failed: {error}",
+                diagnostics={"model": self._model_name},
+            ) from error
+
+    def generate_file_bundle_patch(
+        self,
+        context: FileBundleExecutionContext,
+        prompt: str,
+    ) -> FilePatchProposal:
+        del context
+        try:
+            response = self._client.chat.completions.create(
+                model=self._model_name,
+                messages=[{"role": "user", "content": prompt}],
+                response_format={
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "file_patch_proposal",
+                        "strict": True,
+                        "schema": FilePatchProposal.model_json_schema(),
+                    },
+                },
+                temperature=0,
+            )
+            message = response.choices[0].message
+            refusal = getattr(message, "refusal", None)
+            if refusal:
+                raise ModelInvocationError(
+                    "generate_file_bundle_patch",
+                    f"model refused the request: {refusal}",
+                    diagnostics={"model": self._model_name},
+                )
+            content = message.content
+            if not isinstance(content, str) or not content.strip():
+                raise ModelInvocationError(
+                    "generate_file_bundle_patch",
+                    "model returned an empty structured response",
+                    diagnostics={"model": self._model_name},
+                )
+            return FilePatchProposal.model_validate_json(content)
+        except ModelInvocationError:
+            raise
+        except (ValidationError, ValueError, TypeError, AttributeError) as error:
+            raise ModelInvocationError(
+                "generate_file_bundle_patch",
+                f"model returned an invalid FilePatchProposal: {error}",
+                diagnostics={"model": self._model_name},
+            ) from error
+        except Exception as error:
+            raise ModelInvocationError(
+                "generate_file_bundle_patch",
+                f"file bundle patch request failed: {error}",
                 diagnostics={"model": self._model_name},
             ) from error

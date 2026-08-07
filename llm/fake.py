@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from agent.execution.models import MigrationTaskContext
 from models.bundle_execution import BundlePatchProposal, MigrationBundleContext
+from models.file_bundle_execution import (
+    FileBundleExecutionContext,
+    FilePatchProposal,
+)
 from models.patch_proposal import PatchProposal
 
 
@@ -51,5 +55,29 @@ class FakeBundleModelClient:
         context: MigrationBundleContext,
         prompt: str,
     ) -> BundlePatchProposal:
+        self.calls.append((context, prompt))
+        return self._proposal.model_copy(deep=True)
+
+
+class FakeFileBundleModelClient:
+    def __init__(
+        self,
+        proposal: FilePatchProposal,
+        *,
+        model_name: str = "fake-file-bundle-deterministic",
+    ) -> None:
+        self._proposal = proposal
+        self._model_name = model_name
+        self.calls: list[tuple[FileBundleExecutionContext, str]] = []
+
+    @property
+    def model_name(self) -> str:
+        return self._model_name
+
+    def generate_file_bundle_patch(
+        self,
+        context: FileBundleExecutionContext,
+        prompt: str,
+    ) -> FilePatchProposal:
         self.calls.append((context, prompt))
         return self._proposal.model_copy(deep=True)
