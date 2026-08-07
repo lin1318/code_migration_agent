@@ -272,7 +272,6 @@ def _parse_patch_paths(patch: str) -> set[str]:
             "binary patches are not allowed",
         )
     affected: set[str] = set()
-    _validate_hunk_counts(patch)
     current: tuple[str, str] | None = None
     old_header: str | None = None
     new_header: str | None = None
@@ -326,6 +325,7 @@ def _parse_patch_paths(patch: str) -> set[str]:
         )
     _validate_section(current, old_header, new_header, has_hunk)
     affected.add(current[1])
+    _validate_hunk_counts(patch)
     return affected
 
 

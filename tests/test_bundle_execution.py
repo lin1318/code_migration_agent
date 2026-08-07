@@ -202,7 +202,7 @@ def test_bundle_prompt_is_template_backed(bundle_fixture) -> None:
     assert "Never import two packages under the same identifier" in prompt
     assert "Unchanged context lines must be copied verbatim" in prompt
     assert '"allowed_files": [' in prompt
-    assert '"target_import_alias": "hertzApp"' in prompt
+    assert '"target_import_alias": "hertzServer"' in prompt
     assert "router.go" in prompt
 
 

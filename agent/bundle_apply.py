@@ -99,7 +99,13 @@ def apply_bundle_patch(request: PatchApplyRequest) -> BundleApplyResult:
         patch_path = _temporary_patch(combined)
         checked = _run_git(
             root,
-            ["apply", "--check", "--unidiff-zero", str(patch_path)],
+            [
+                "apply",
+                "--check",
+                "--unidiff-zero",
+                "--ignore-space-change",
+                str(patch_path),
+            ],
             request.timeout_seconds,
         )
         command_results.append(checked)
@@ -114,7 +120,12 @@ def apply_bundle_patch(request: PatchApplyRequest) -> BundleApplyResult:
         mutated = True
         applied = _run_git(
             root,
-            ["apply", "--unidiff-zero", str(patch_path)],
+            [
+                "apply",
+                "--unidiff-zero",
+                "--ignore-space-change",
+                str(patch_path),
+            ],
             request.timeout_seconds,
         )
         command_results.append(applied)
@@ -126,6 +137,7 @@ def apply_bundle_patch(request: PatchApplyRequest) -> BundleApplyResult:
                 "--reverse",
                 "--check",
                 "--unidiff-zero",
+                "--ignore-space-change",
                 str(patch_path),
             ],
             request.timeout_seconds,
@@ -245,8 +257,9 @@ def _temporary_patch(content: str) -> Path:
 
 
 def _patch_with_target_line_endings(target: Path, patch: str) -> str:
-    del target
-    return "\n".join(patch.splitlines()) + "\n"
+    content = target.read_bytes()
+    newline = "\r\n" if b"\r\n" in content else "\n"
+    return newline.join(patch.splitlines()) + newline
 
 
 def _run_git(root: Path, arguments: list[str], timeout: float) -> GitCommandResult:

@@ -225,6 +225,7 @@ rules:
     source_package: github.com/gin-gonic/gin
     source_symbol: (*Engine).GET
     target_package: github.com/cloudwego/hertz/pkg/app/server
+    target_import_alias: hertzServer
     target_symbol: (*Hertz).GET
     migration_category: routing
     confidence: exact

@@ -14,8 +14,8 @@ Requirements:
   existing import identifier in that file. If it conflicts and the matching
   rule supplies `target_import_alias`, import the target package with that
   alias and use the alias for every new target symbol reference. Preserve the
-  existing project import and its identifier. Never import two packages under
-  the same identifier.
+  existing project import and its identifier.
+- Never import two packages under the same identifier.
 - Never invent Hertz APIs.
 - Never modify files outside the bundle.
 - Generate the smallest correct change.
