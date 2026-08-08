@@ -38,19 +38,13 @@ func Get(c *gin.Context) {
 	_ = c.Query("id")
 }
 '''
-PATCH = '''diff --git a/handler/user.go b/handler/user.go
---- a/handler/user.go
-+++ b/handler/user.go
-@@ -1,7 +1,7 @@
- package handler
- 
--import "github.com/gin-gonic/gin"
-+import hertzApp "github.com/cloudwego/hertz/pkg/app"
- 
--func Get(c *gin.Context) {
-+func Get(c *hertzApp.RequestContext) {
- 	_ = c.Query("id")
- }
+UPDATED = '''package handler
+
+import hertzApp "github.com/cloudwego/hertz/pkg/app"
+
+func Get(c *hertzApp.RequestContext) {
+	_ = c.Query("id")
+}
 '''
 
 
@@ -96,17 +90,17 @@ def inputs(tmp_path: Path):
     return inspection, registry, bundle, context
 
 
-def proposal(bundle: FileMigrationBundle, patch: str | None = PATCH):
+def proposal(bundle: FileMigrationBundle, content: str | None = UPDATED):
     return FilePatchProposal(
         bundle_id=bundle.bundle_id,
         file=bundle.file,
         status=(
-            FilePatchStatus.PATCH_GENERATED
-            if patch is not None
+            FilePatchStatus.CONTENT_GENERATED
+            if content is not None
             else FilePatchStatus.NO_CHANGE_NEEDED
         ),
         summary="migrate handler",
-        patch=patch,
+        updated_content=content,
         confidence=PatchConfidence.HIGH,
         assumptions=[],
         manual_review_notes=[],
@@ -135,20 +129,29 @@ def test_prompt_marks_cross_file_information_read_only(tmp_path: Path) -> None:
     assert "Only `handler/user.go` may be edited" in prompt
 
 
-def test_valid_single_file_patch_is_accepted(tmp_path: Path) -> None:
+def test_valid_complete_file_content_is_accepted(tmp_path: Path) -> None:
     _, _, bundle, context = inputs(tmp_path)
 
     validated = validate_file_patch_proposal(proposal(bundle), context)
 
-    assert validated.patch == PATCH
+    assert validated.updated_content == UPDATED
 
 
-def test_patch_for_another_file_is_rejected(tmp_path: Path) -> None:
+def test_proposal_for_another_file_is_rejected(tmp_path: Path) -> None:
     _, _, bundle, context = inputs(tmp_path)
-    invalid = PATCH.replace("handler/user.go", "handler/other.go")
+    invalid = proposal(bundle).model_copy(update={"file": "handler/other.go"})
 
     with pytest.raises(ProposalValidationError):
-        validate_file_patch_proposal(proposal(bundle, invalid), context)
+        validate_file_patch_proposal(invalid, context)
+
+
+def test_markdown_wrapped_content_is_rejected(tmp_path: Path) -> None:
+    _, _, bundle, context = inputs(tmp_path)
+
+    with pytest.raises(ProposalValidationError, match="Markdown"):
+        validate_file_patch_proposal(
+            proposal(bundle, f"```go\n{UPDATED}```"), context
+        )
 
 
 def test_no_change_is_rejected_while_owned_gin_usage_remains(
@@ -188,7 +191,8 @@ def test_execution_calls_model_without_modifying_repository(
         tmp_path, inspection, bundle, registry, client
     )
 
-    assert result.proposal.patch == PATCH
+    assert result.proposal.updated_content == UPDATED
+    assert len(result.original_sha256) == 64
     assert result.file == bundle.file
     assert len(client.calls) == 1
     assert (tmp_path / bundle.file).read_text(encoding="utf-8") == SOURCE

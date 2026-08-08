@@ -44,10 +44,16 @@ class TargetOperation(RuleModel):
     notes: str | None = None
 
 
+class SourceReceiver(RuleModel):
+    root_type: str = Field(min_length=1)
+    access_path: list[str]
+
+
 class MigrationRule(RuleModel):
     rule_id: str = Field(min_length=1, pattern=r"^[a-z][a-z0-9_.-]*$")
     source_package: str = Field(min_length=1)
     source_symbol: str = Field(min_length=1)
+    source_receiver: SourceReceiver | None = None
     target_package: str = Field(min_length=1)
     target_import_alias: str | None = Field(
         default=None,

@@ -89,8 +89,11 @@ def build_plan(
 ):
     classification, inspection = build_inputs(classified_files, references)
     file_plan = build_file_migration_plan(classification)
+    registry = load_rule_registry(DEFAULT_RULE_PATH)
     return (
-        build_file_bundle_plan(classification, file_plan, inspection),
+        build_file_bundle_plan(
+            classification, file_plan, inspection, registry
+        ),
         classification,
         file_plan,
         inspection,
@@ -179,6 +182,84 @@ def test_bundle_contains_cross_file_symbol_as_read_only_context() -> None:
             "framework_bound": False,
         }
     ]
+
+
+def test_direct_gin_request_chain_adds_form_file_rule_only() -> None:
+    direct = SymbolReference(
+        file="handler/upload.go",
+        line=10,
+        column=18,
+        enclosing_symbol="example.com/app/handler.Upload",
+        symbol="net/http.(*Request).FormFile",
+        package_path="net/http",
+        signature=(
+            "func(key string) (mime/multipart.File, "
+            "*mime/multipart.FileHeader, error)"
+        ),
+        standard_library=True,
+        resolved=True,
+        receiver_root_type="*github.com/gin-gonic/gin.Context",
+        receiver_path=["Request"],
+    )
+    plan, _, _, _ = build_plan(
+        [
+            classified(
+                "handler/upload.go",
+                GinFileRole.HANDLER,
+                f"{GIN}.Context",
+            )
+        ],
+        [direct],
+    )
+
+    assert "net-http.request.form-file-to-hertz" in plan.bundles[0].rule_ids
+
+    standalone = direct.model_copy(
+        update={
+            "receiver_root_type": "*net/http.Request",
+            "receiver_path": [],
+        }
+    )
+    standalone_plan, _, _, _ = build_plan(
+        [
+            classified(
+                "handler/upload.go",
+                GinFileRole.HANDLER,
+                f"{GIN}.Context",
+            )
+        ],
+        [standalone],
+    )
+
+    assert (
+        "net-http.request.form-file-to-hertz"
+        not in standalone_plan.bundles[0].rule_ids
+    )
+
+
+def test_exact_semantic_reference_adds_rule_without_receiver_constraint() -> None:
+    swagger = SymbolReference(
+        file="routers/router.go",
+        line=20,
+        column=28,
+        enclosing_symbol="example.com/app/routers.InitRouter",
+        symbol="github.com/swaggo/gin-swagger.WrapHandler",
+        package_path="github.com/swaggo/gin-swagger",
+        signature="func(*webdav.Handler) gin.HandlerFunc",
+        resolved=True,
+    )
+    plan, _, _, _ = build_plan(
+        [
+            classified(
+                "routers/router.go",
+                GinFileRole.ROUTING,
+                f"{GIN}.(*Engine).GET",
+            )
+        ],
+        [swagger],
+    )
+
+    assert "gin-swagger.wrap-handler" in plan.bundles[0].rule_ids
 
 
 def test_same_file_reference_is_not_read_only_context() -> None:
@@ -294,7 +375,11 @@ def test_validation_rejects_duplicate_file_bundle() -> None:
 
     with pytest.raises(ValueError, match="multiple migration bundles"):
         validate_file_bundle_plan(
-            invalid, classification, file_plan, inspection
+            invalid,
+            classification,
+            file_plan,
+            inspection,
+            load_rule_registry(DEFAULT_RULE_PATH),
         )
 
 
@@ -322,5 +407,9 @@ def test_validation_rejects_missing_file_usage() -> None:
 
     with pytest.raises(ValueError, match="does not contain all file usages"):
         validate_file_bundle_plan(
-            invalid, classification, file_plan, inspection
+            invalid,
+            classification,
+            file_plan,
+            inspection,
+            load_rule_registry(DEFAULT_RULE_PATH),
         )

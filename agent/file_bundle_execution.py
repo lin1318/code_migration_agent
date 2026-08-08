@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import hashlib
 from pathlib import Path
 from string import Template
 from typing import Protocol
@@ -13,11 +13,6 @@ from agent.execution.errors import (
     ProposalValidationError,
     SuspiciousNoChangeProposalError,
     TaskSelectionError,
-)
-from agent.execution.validator import (
-    normalize_patch_hunk_counts,
-    validate_patch_document,
-    validate_patch_old_content,
 )
 from knowledge.registry import RuleRegistry
 from models.file_bundle_execution import (
@@ -159,19 +154,18 @@ def validate_file_patch_proposal(
     if proposal.status is FilePatchStatus.NO_CHANGE_NEEDED:
         _validate_no_change_needed(context)
         return proposal
-    if proposal.patch is None:
+    if proposal.updated_content is None:
         return proposal
-
-    validate_patch_document(
-        proposal.patch,
-        expected_file=bundle.file,
-        allowed_files={bundle.file},
-    )
-    validate_patch_old_content(
-        proposal.patch,
-        source=context.editable_file.content,
-        expected_file=bundle.file,
-    )
+    if "```" in proposal.updated_content:
+        raise ProposalValidationError(
+            "validate_file_content",
+            "updated_content must not contain Markdown code fences",
+        )
+    if proposal.updated_content == context.editable_file.content:
+        raise ProposalValidationError(
+            "validate_file_content",
+            "unchanged content must use no_change_needed",
+        )
     return proposal
 
 
@@ -192,23 +186,8 @@ def execute_file_bundle(
         completed_files=completed_files,
     )
     prompt = build_file_bundle_prompt(context)
-    proposal: FilePatchProposal | None = None
-    for attempt in range(2):
-        proposal = model_client.generate_file_bundle_patch(context, prompt)
-        if proposal.patch is not None:
-            proposal = proposal.model_copy(
-                update={"patch": normalize_patch_hunk_counts(proposal.patch)}
-            )
-        try:
-            validate_file_patch_proposal(proposal, context)
-            break
-        except ProposalValidationError as error:
-            if error.details.operation != "validate_patch_source" or attempt == 1:
-                raise
-            prompt = _source_correction_prompt(
-                prompt, error, context.editable_file.content
-            )
-    assert proposal is not None
+    proposal = model_client.generate_file_bundle_patch(context, prompt)
+    validate_file_patch_proposal(proposal, context)
     return FileBundleExecutionResult(
         bundle_id=bundle.bundle_id,
         file=bundle.file,
@@ -217,6 +196,9 @@ def execute_file_bundle(
         read_only_symbol_count=len(context.read_only_context),
         prompt_size=len(prompt),
         model_used=model_client.model_name,
+        original_sha256=hashlib.sha256(
+            context.editable_file.content.encode("utf-8")
+        ).hexdigest(),
         proposal=proposal,
     )
 
@@ -268,21 +250,6 @@ def _rule_requires_source_change(rule: MigrationRule) -> bool:
     return (
         rule.source_package != rule.target_package
         or rule.source_symbol != rule.target_symbol
-    )
-
-
-def _source_correction_prompt(
-    prompt: str,
-    error: ProposalValidationError,
-    source: str,
-) -> str:
-    return (
-        prompt
-        + "\n\nCORRECTION REQUIRED:\n"
-        + error.details.message
-        + "\nGenerate a new proposal from this exact current editable source. "
-        + "Do not reuse the previous diff:\n"
-        + json.dumps(source, ensure_ascii=False)
     )
 
 

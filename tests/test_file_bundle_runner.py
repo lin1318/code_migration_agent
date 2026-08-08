@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import difflib
 import subprocess
 from pathlib import Path
 from unittest.mock import patch
@@ -8,11 +7,12 @@ from unittest.mock import patch
 from agent.file_bundle_runner import run_file_migration
 from knowledge.registry import load_rule_registry
 from models.analyzer import AnalyzerResult, GinUsage
-from models.bundle_apply import BundleApplyResult, BundleApplyStatus
 from models.file_bundle_execution import FilePatchProposal, FilePatchStatus
 from models.file_bundles import FileBundlePlan, FileMigrationBundle
 from models.file_migration_execution import (
     FileBundleRunStatus,
+    FileContentApplyResult,
+    FileContentApplyStatus,
     FileMigrationRunStatus,
 )
 from models.file_migration_plan import FileMigrationStage
@@ -41,7 +41,7 @@ class ContextAwareClient:
                 file=bundle.file,
                 status=FilePatchStatus.BLOCKED,
                 summary="manual migration required",
-                patch=None,
+                updated_content=None,
                 confidence=PatchConfidence.LOW,
                 assumptions=[],
                 manual_review_notes=["custom handler"],
@@ -55,27 +55,14 @@ class ContextAwareClient:
         return FilePatchProposal(
             bundle_id=bundle.bundle_id,
             file=bundle.file,
-            status=FilePatchStatus.PATCH_GENERATED,
+            status=FilePatchStatus.CONTENT_GENERATED,
             summary="migrate file",
-            patch=_whole_file_patch(bundle.file, source, target),
+            updated_content=target,
             confidence=PatchConfidence.HIGH,
             assumptions=[],
             manual_review_notes=[],
             unresolved_dependencies=[],
         )
-
-
-def _whole_file_patch(file: str, source: str, target: str) -> str:
-    unified = "".join(
-        difflib.unified_diff(
-            source.splitlines(keepends=True),
-            target.splitlines(keepends=True),
-            fromfile=f"a/{file}",
-            tofile=f"b/{file}",
-            n=3,
-        )
-    )
-    return f"diff --git a/{file} b/{file}\n{unified}"
 
 
 def _inputs(repository: Path, files: list[str]):
@@ -139,16 +126,14 @@ def _inputs(repository: Path, files: list[str]):
     return inspection, registry, plan
 
 
-def _applied(bundle_id: str, file: str) -> BundleApplyResult:
-    return BundleApplyResult(
+def _applied(bundle_id: str, file: str) -> FileContentApplyResult:
+    return FileContentApplyResult(
         bundle_id=bundle_id,
-        status=BundleApplyStatus.APPLIED,
-        applied_files=[],
-        changed_files=[file],
-        git_diff="diff",
-        rollback_performed=False,
-        rollback_succeeded=None,
-        command_results=[],
+        file=file,
+        status=FileContentApplyStatus.APPLIED,
+        original_sha256="0" * 64,
+        updated_sha256="1" * 64,
+        audit_diff="diff",
         errors=[],
     )
 
@@ -172,7 +157,7 @@ def test_runs_files_in_order_and_passes_completed_files(tmp_path: Path) -> None:
     ]
 
     with patch(
-        "agent.file_bundle_runner.apply_bundle_patch",
+        "agent.file_bundle_runner.apply_file_content",
         side_effect=applications,
     ) as apply:
         result = run_file_migration(
@@ -197,7 +182,7 @@ def test_stops_at_blocked_file_without_running_later_files(
     client = ContextAwareClient(blocked_file="b.go")
 
     with patch(
-        "agent.file_bundle_runner.apply_bundle_patch",
+        "agent.file_bundle_runner.apply_file_content",
         return_value=_applied("file-bundle-1", "a.go"),
     ) as apply:
         result = run_file_migration(

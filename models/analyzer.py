@@ -45,6 +45,8 @@ class SymbolReference(AnalyzerModel):
     framework_bound: bool = False
     standard_library: bool = False
     resolved: bool = False
+    receiver_root_type: str = ""
+    receiver_path: list[str] = Field(default_factory=list)
 
 
 class AnalyzerResult(AnalyzerModel):

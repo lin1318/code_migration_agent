@@ -64,10 +64,33 @@ def create_file_bundle_model_client(
     *,
     provider: str | None = None,
     model_name: str | None = None,
+    timeout_seconds: float | None = None,
 ):
     """Create the provider used for deterministic one-file bundles."""
 
-    return create_bundle_model_client(
-        provider=provider,
-        model_name=model_name,
+    load_project_environment()
+    selected_provider = (
+        provider or os.getenv("PATCH_MODEL_PROVIDER", "gemini")
+    ).lower()
+    if selected_provider == "gemini":
+        selected_model = model_name or os.getenv(
+            "PATCH_MODEL_NAME",
+            DEFAULT_GEMINI_MODEL,
+        )
+        return GeminiModelClient(
+            model_name=selected_model,
+            timeout_seconds=timeout_seconds,
+        )
+    if selected_provider == "aihubmix":
+        selected_model = model_name or os.getenv(
+            "PATCH_MODEL_NAME",
+            DEFAULT_MODEL_NAME,
+        )
+        return AiHubMixModelClient(
+            model_name=selected_model,
+            timeout_seconds=timeout_seconds,
+        )
+    raise ModelInvocationError(
+        "configure_model",
+        f"unsupported PATCH_MODEL_PROVIDER: {selected_provider}",
     )

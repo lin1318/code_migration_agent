@@ -27,6 +27,7 @@ class AiHubMixModelClient:
         model_name: str = DEFAULT_MODEL_NAME,
         api_key: str | None = None,
         base_url: str | None = None,
+        timeout_seconds: float | None = None,
         client=None,
     ) -> None:
         load_project_environment()
@@ -49,10 +50,17 @@ class AiHubMixModelClient:
                     "configure_model",
                     "the openai package is not installed",
                 ) from error
-            client = openai.OpenAI(
-                api_key=key,
-                base_url=self._base_url,
-            )
+            if timeout_seconds is None:
+                client = openai.OpenAI(
+                    api_key=key,
+                    base_url=self._base_url,
+                )
+            else:
+                client = openai.OpenAI(
+                    api_key=key,
+                    base_url=self._base_url,
+                    timeout=timeout_seconds,
+                )
         self._client = client
 
     @property

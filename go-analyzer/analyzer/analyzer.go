@@ -22,19 +22,21 @@ type Result struct {
 
 // Reference describes a semantically resolved symbol referenced by source.
 type Reference struct {
-	File            string `json:"file"`
-	Line            int    `json:"line"`
-	Column          int    `json:"column"`
-	EnclosingSymbol string `json:"enclosing_symbol,omitempty"`
-	Symbol          string `json:"symbol"`
-	PackagePath     string `json:"package_path,omitempty"`
-	ModulePath      string `json:"module_path,omitempty"`
-	DefinitionFile  string `json:"definition_file,omitempty"`
-	DefinitionLine  int    `json:"definition_line,omitempty"`
-	Signature       string `json:"signature,omitempty"`
-	FrameworkBound  bool   `json:"framework_bound"`
-	StandardLibrary bool   `json:"standard_library"`
-	Resolved        bool   `json:"resolved"`
+	File             string   `json:"file"`
+	Line             int      `json:"line"`
+	Column           int      `json:"column"`
+	EnclosingSymbol  string   `json:"enclosing_symbol,omitempty"`
+	Symbol           string   `json:"symbol"`
+	PackagePath      string   `json:"package_path,omitempty"`
+	ModulePath       string   `json:"module_path,omitempty"`
+	DefinitionFile   string   `json:"definition_file,omitempty"`
+	DefinitionLine   int      `json:"definition_line,omitempty"`
+	Signature        string   `json:"signature,omitempty"`
+	FrameworkBound   bool     `json:"framework_bound"`
+	StandardLibrary  bool     `json:"standard_library"`
+	Resolved         bool     `json:"resolved"`
+	ReceiverRootType string   `json:"receiver_root_type,omitempty"`
+	ReceiverPath     []string `json:"receiver_path,omitempty"`
 }
 
 // Usage identifies one semantically resolved Gin usage.

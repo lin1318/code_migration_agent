@@ -1,12 +1,21 @@
 package positive
 
-import "github.com/gin-gonic/gin"
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+)
 
 func handler(c *gin.Context) {
 	c.Param("id")
 	c.Query("q")
 	c.ShouldBindJSON(&struct{}{})
 	c.JSON(200, gin.H{"ok": true})
+	c.Request.FormFile("upload")
+}
+
+func standalone(request *http.Request) {
+	request.FormFile("upload")
 }
 
 func routes() {

@@ -14,7 +14,7 @@ from models.patch_proposal import PatchConfidence
 
 
 class FilePatchStatus(StrEnum):
-    PATCH_GENERATED = "patch_generated"
+    CONTENT_GENERATED = "content_generated"
     BLOCKED = "blocked"
     NO_CHANGE_NEEDED = "no_change_needed"
     FAILED = "failed"
@@ -25,7 +25,7 @@ class FilePatchProposal(PlanModel):
     file: str
     status: FilePatchStatus
     summary: str = Field(min_length=1)
-    patch: str | None
+    updated_content: str | None
     confidence: PatchConfidence
     assumptions: list[str]
     manual_review_notes: list[str]
@@ -33,12 +33,14 @@ class FilePatchProposal(PlanModel):
 
     @model_validator(mode="after")
     def validate_status_payload(self) -> "FilePatchProposal":
-        if self.status is FilePatchStatus.PATCH_GENERATED:
-            if self.patch is None or not self.patch.strip():
-                raise ValueError("patch_generated requires a non-empty patch")
-        elif self.patch is not None:
+        if self.status is FilePatchStatus.CONTENT_GENERATED:
+            if self.updated_content is None or not self.updated_content.strip():
+                raise ValueError(
+                    "content_generated requires non-empty updated_content"
+                )
+        elif self.updated_content is not None:
             raise ValueError(
-                f"{self.status.value} requires a null patch"
+                f"{self.status.value} requires null updated_content"
             )
         if self.status is FilePatchStatus.BLOCKED and not (
             self.unresolved_dependencies or self.manual_review_notes
@@ -67,5 +69,5 @@ class FileBundleExecutionResult(PlanModel):
     read_only_symbol_count: int = Field(ge=0)
     prompt_size: int = Field(ge=0)
     model_used: str
+    original_sha256: str
     proposal: FilePatchProposal
-

@@ -21,6 +21,7 @@ class GeminiModelClient(AiHubMixModelClient):
         model_name: str = DEFAULT_GEMINI_MODEL,
         api_key: str | None = None,
         base_url: str | None = None,
+        timeout_seconds: float | None = None,
         client=None,
     ) -> None:
         load_project_environment()
@@ -34,5 +35,6 @@ class GeminiModelClient(AiHubMixModelClient):
             model_name=model_name,
             api_key=key or "test-client-key",
             base_url=base_url or DEFAULT_GEMINI_BASE_URL,
+            timeout_seconds=timeout_seconds,
             client=client,
         )

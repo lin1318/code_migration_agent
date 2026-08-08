@@ -52,6 +52,10 @@ rules:
   - rule_id: net-http.request.form-file-to-hertz
     source_package: net/http
     source_symbol: (*Request).FormFile
+    source_receiver:
+      root_type: "*github.com/gin-gonic/gin.Context"
+      access_path:
+        - Request
     target_package: github.com/cloudwego/hertz/pkg/app
     target_import_alias: hertzApp
     target_operations:

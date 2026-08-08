@@ -65,6 +65,9 @@ func referenceForExpr(
 		EnclosingSymbol: enclosing,
 		Symbol:          display,
 	}
+	reference.ReceiverRootType, reference.ReceiverPath = receiverChain(
+		pkg.TypesInfo, expression,
+	)
 	if object == nil {
 		return reference
 	}
@@ -93,6 +96,28 @@ func referenceForExpr(
 		reference.FrameworkBound = true
 	}
 	return reference
+}
+
+func receiverChain(info *types.Info, expression ast.Expr) (string, []string) {
+	selector, ok := expression.(*ast.SelectorExpr)
+	if !ok || info.Selections[selector] == nil {
+		return "", nil
+	}
+	receiver := selector.X
+	path := []string{}
+	for {
+		field, ok := receiver.(*ast.SelectorExpr)
+		if !ok {
+			break
+		}
+		path = append([]string{field.Sel.Name}, path...)
+		receiver = field.X
+	}
+	receiverType := info.TypeOf(receiver)
+	if receiverType == nil {
+		return "", path
+	}
+	return types.TypeString(receiverType, packageQualifier), path
 }
 
 func referencedObject(info *types.Info, expression ast.Expr) (types.Object, string) {

@@ -1,8 +1,10 @@
 package gin
 
+import "net/http"
+
 type H map[string]any
 type HandlerFunc func(*Context)
-type Context struct{}
+type Context struct{ Request *http.Request }
 type RouterGroup struct{}
 type Engine struct{ RouterGroup }
 

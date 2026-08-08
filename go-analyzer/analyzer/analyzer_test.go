@@ -77,6 +77,39 @@ func TestAnalyzeReturnsSemanticSymbolReferences(t *testing.T) {
 	}
 }
 
+func TestAnalyzeDistinguishesDirectGinRequestReceiverChain(t *testing.T) {
+	result := Analyze(fixturePath(t, "gin-positive"))
+
+	var direct, standalone *Reference
+	for index := range result.References {
+		reference := &result.References[index]
+		if reference.Symbol != "net/http.(*Request).FormFile" {
+			continue
+		}
+		if reference.EnclosingSymbol == "example.com/gin-positive.handler" {
+			direct = reference
+		}
+		if reference.EnclosingSymbol == "example.com/gin-positive.standalone" {
+			standalone = reference
+		}
+	}
+	if direct == nil || standalone == nil {
+		t.Fatalf("FormFile references = %#v, want direct and standalone", result.References)
+	}
+	if direct.ReceiverRootType != "*github.com/gin-gonic/gin.Context" {
+		t.Errorf("direct root type = %q", direct.ReceiverRootType)
+	}
+	if len(direct.ReceiverPath) != 1 || direct.ReceiverPath[0] != "Request" {
+		t.Errorf("direct receiver path = %#v, want [Request]", direct.ReceiverPath)
+	}
+	if standalone.ReceiverRootType != "*net/http.Request" {
+		t.Errorf("standalone root type = %q", standalone.ReceiverRootType)
+	}
+	if len(standalone.ReceiverPath) != 0 {
+		t.Errorf("standalone receiver path = %#v, want empty", standalone.ReceiverPath)
+	}
+}
+
 func TestAnalyzeInvalidGoCodeReturnsStructuredErrors(t *testing.T) {
 	result := Analyze(fixturePath(t, "invalid"))
 

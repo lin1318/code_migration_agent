@@ -20,14 +20,16 @@ Requirements:
   types, Hertz options, and server startup.
 - For a shared-context file, migrate its Gin-bound wrapper signatures and
   operations consistently for downstream callers.
-- A generated patch must be a raw one-file unified diff beginning with
-  `diff --git a/<file> b/<file>`, followed by matching `---`, `+++`, and `@@`
-  headers. Never use Markdown fences.
-- Build old-side and context lines from the exact `editable_file.content`.
+- For `content_generated`, return the complete final Go file in
+  `updated_content`, including its package clause, imports, declarations, and
+  unchanged source. Never return a diff or Markdown fences.
+- Preserve the file's business logic and all source that does not require
+  migration. Do not omit sections merely because they are unchanged.
 - Do not add, delete, rename, commit, apply, or claim to apply files.
 - Use `blocked` with explicit unresolved dependencies when a safe patch cannot
   be generated.
-- Use `no_change_needed` only when the current source genuinely requires no
+- Use `no_change_needed` with null `updated_content` only when the current
+  source genuinely requires no
   source edit under all supplied rules.
 - Copy the bundle ID and editable file path exactly.
 

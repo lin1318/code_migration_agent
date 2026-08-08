@@ -4,22 +4,16 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from agent.bundle_apply import BundleApplyError, apply_bundle_patch
 from agent.execution.errors import ExecutionErrorDetail, TaskExecutionError
 from agent.file_bundle_execution import FileBundleModelClient, execute_file_bundle
+from agent.file_content_apply import apply_file_content
 from knowledge.registry import RuleRegistry
-from models.bundle_apply import BundleApplyStatus, PatchApplyRequest
-from models.bundle_execution import (
-    BundleFilePatch,
-    BundlePatchProposal,
-    BundlePatchStatus,
-)
-from models.bundles import BundleComplexity, MigrationBundle
-from models.file_bundle_execution import FilePatchProposal, FilePatchStatus
+from models.file_bundle_execution import FilePatchStatus
 from models.file_bundles import FileBundlePlan, FileMigrationBundle
 from models.file_migration_execution import (
     FileBundleRunRecord,
     FileBundleRunStatus,
+    FileContentApplyStatus,
     FileMigrationRunResult,
     FileMigrationRunStatus,
 )
@@ -66,7 +60,7 @@ def run_file_migration(
                     )
                 )
                 continue
-            if proposal.status is not FilePatchStatus.PATCH_GENERATED:
+            if proposal.status is not FilePatchStatus.CONTENT_GENERATED:
                 record_status = (
                     FileBundleRunStatus.BLOCKED
                     if proposal.status is FilePatchStatus.BLOCKED
@@ -96,16 +90,13 @@ def run_file_migration(
                 )
                 return _stopped(root, plan, completed_files, records, bundle)
 
-            application = apply_bundle_patch(
-                PatchApplyRequest(
-                    repository_path=str(root),
-                    bundle=_application_bundle(bundle),
-                    proposal=_application_proposal(execution.proposal),
-                    allow_dirty=allow_dirty or has_applied_changes,
-                    timeout_seconds=timeout_seconds,
-                )
+            application = apply_file_content(
+                root,
+                execution,
+                allow_dirty=allow_dirty or has_applied_changes,
+                timeout_seconds=timeout_seconds,
             )
-            if application.status is BundleApplyStatus.APPLIED:
+            if application.status is FileContentApplyStatus.APPLIED:
                 has_applied_changes = True
                 completed_files.append(bundle.file)
                 records.append(
@@ -120,7 +111,7 @@ def run_file_migration(
                 continue
             status = (
                 FileBundleRunStatus.ROLLED_BACK
-                if application.status is BundleApplyStatus.ROLLED_BACK
+                if application.status is FileContentApplyStatus.ROLLED_BACK
                 else FileBundleRunStatus.FAILED
             )
             records.append(
@@ -170,43 +161,6 @@ def _validate_plan_order(plan: FileBundlePlan) -> None:
         range(1, len(plan.bundles) + 1)
     ):
         raise ValueError("bundle order values must be consecutive")
-
-
-def _application_bundle(bundle: FileMigrationBundle) -> MigrationBundle:
-    return MigrationBundle(
-        bundle_id=bundle.bundle_id,
-        files=[bundle.file],
-        framework_symbols=bundle.framework_symbols,
-        migration_concerns=[bundle.stage.value],
-        external_dependencies=[],
-        blocking_dependencies=[],
-        depends_on=[],
-        estimated_complexity=(
-            BundleComplexity.MEDIUM
-            if bundle.review_required
-            else BundleComplexity.LOW
-        ),
-    )
-
-
-def _application_proposal(proposal: FilePatchProposal) -> BundlePatchProposal:
-    patch = proposal.patch
-    if patch is None:
-        raise BundleApplyError(
-            "convert_file_proposal",
-            "patch_generated proposal is missing its patch",
-        )
-    return BundlePatchProposal(
-        bundle_id=proposal.bundle_id,
-        status=BundlePatchStatus.PATCH_GENERATED,
-        summary=proposal.summary,
-        patches=[BundleFilePatch(file=proposal.file, patch=patch)],
-        modified_files=[proposal.file],
-        confidence=proposal.confidence,
-        assumptions=proposal.assumptions,
-        manual_review_notes=proposal.manual_review_notes,
-        unresolved_dependencies=proposal.unresolved_dependencies,
-    )
 
 
 def _error_record(

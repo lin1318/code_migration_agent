@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 from collections import Counter
 
+from knowledge.registry import RuleRegistry
 from models.file_bundles import (
     FileBundlePlan,
     FileMigrationBundle,
@@ -13,6 +14,7 @@ from models.file_bundles import (
 from models.file_classification import FileRoleConfidence, GinFileClassification
 from models.file_migration_plan import FileMigrationPlan, FileMigrationStage
 from models.inspection import RepositoryInspection
+from models.migration_rules import MigrationConfidence, MigrationRule
 from tools.file_migration_planner import validate_file_migration_plan
 
 
@@ -20,6 +22,7 @@ def build_file_bundle_plan(
     classification: GinFileClassification,
     file_plan: FileMigrationPlan,
     inspection: RepositoryInspection,
+    registry: RuleRegistry,
 ) -> FileBundlePlan:
     """Expand the uniquely owned file plan into one bundle per file."""
 
@@ -28,21 +31,29 @@ def build_file_bundle_plan(
         _normalized(item.file): item for item in classification.files
     }
     rules_by_usage_id, review_usage_ids = _usage_rule_metadata(inspection)
+    semantic_rules_by_file = _semantic_rule_metadata(inspection, registry)
 
     bundles: list[FileMigrationBundle] = []
     for stage_plan in file_plan.stages:
         for file in stage_plan.files:
             classified = classified_by_file[_normalized(file)]
             usage_ids = sorted(classified.usage_ids)
+            semantic_rules = semantic_rules_by_file.get(
+                _normalized(file), []
+            )
             rule_ids = sorted(
                 {
                     rule_id
                     for usage_id in usage_ids
                     if (rule_id := rules_by_usage_id.get(usage_id)) is not None
                 }
+                | {rule.rule_id for rule in semantic_rules}
             )
             has_review_usage = any(
                 usage_id in review_usage_ids for usage_id in usage_ids
+            ) or any(
+                rule.confidence is not MigrationConfidence.EXACT
+                for rule in semantic_rules
             )
             reasons = list(classified.reasons)
             if has_review_usage:
@@ -74,7 +85,9 @@ def build_file_bundle_plan(
         bundles=bundles,
         bundle_ordering=[bundle.bundle_id for bundle in bundles],
     )
-    validate_file_bundle_plan(plan, classification, file_plan, inspection)
+    validate_file_bundle_plan(
+        plan, classification, file_plan, inspection, registry
+    )
     return plan
 
 
@@ -83,6 +96,7 @@ def validate_file_bundle_plan(
     classification: GinFileClassification,
     file_plan: FileMigrationPlan,
     inspection: RepositoryInspection,
+    registry: RuleRegistry,
 ) -> None:
     """Validate one-to-one file bundles, contents, rules, and ordering."""
 
@@ -122,9 +136,13 @@ def validate_file_bundle_plan(
         for file in stage.files
     }
     rules_by_usage_id, review_usage_ids = _usage_rule_metadata(inspection)
+    semantic_rules_by_file = _semantic_rule_metadata(inspection, registry)
     all_bundle_usage_ids: list[str] = []
     for bundle in plan.bundles:
         classified = expected_files[_normalized(bundle.file)]
+        semantic_rules = semantic_rules_by_file.get(
+            _normalized(bundle.file), []
+        )
         if bundle.stage != expected_stage_by_file[_normalized(bundle.file)]:
             raise ValueError(f"bundle for {bundle.file!r} has the wrong stage")
         if bundle.bundle_id != _bundle_id(bundle.stage, bundle.file):
@@ -140,6 +158,7 @@ def validate_file_bundle_plan(
                 for usage_id in expected_usage_ids
                 if (rule_id := rules_by_usage_id.get(usage_id)) is not None
             }
+            | {rule.rule_id for rule in semantic_rules}
         )
         if bundle.rule_ids != expected_rule_ids:
             raise ValueError(
@@ -159,6 +178,10 @@ def validate_file_bundle_plan(
             classified.confidence is FileRoleConfidence.REVIEW
             or any(
                 usage_id in review_usage_ids for usage_id in expected_usage_ids
+            )
+            or any(
+                rule.confidence is not MigrationConfidence.EXACT
+                for rule in semantic_rules
             )
         )
         if bundle.review_required != expected_review:
@@ -204,6 +227,30 @@ def _usage_rule_metadata(
         review.add(unsupported.usage.usage_id)
     review.update(item.usage.usage_id for item in inspection.unmatched_usages)
     return rules, review
+
+
+def _semantic_rule_metadata(
+    inspection: RepositoryInspection,
+    registry: RuleRegistry,
+) -> dict[str, list[MigrationRule]]:
+    rules_by_file: dict[str, dict[str, MigrationRule]] = {}
+    for reference in inspection.semantic_references:
+        rule = registry.lookup_resolved_symbol(reference.symbol)
+        if rule is None:
+            continue
+        receiver = rule.source_receiver
+        if receiver is not None and (
+            reference.receiver_root_type != receiver.root_type
+            or reference.receiver_path != receiver.access_path
+        ):
+            continue
+        rules_by_file.setdefault(_normalized(reference.file), {})[
+            rule.rule_id
+        ] = rule
+    return {
+        file: [rules[rule_id] for rule_id in sorted(rules)]
+        for file, rules in rules_by_file.items()
+    }
 
 
 def _read_only_context(
