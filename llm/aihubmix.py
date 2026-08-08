@@ -7,14 +7,11 @@ import os
 from pydantic import ValidationError
 
 from agent.execution.errors import ModelInvocationError
-from agent.execution.models import MigrationTaskContext
 from llm.config import load_project_environment
-from models.bundle_execution import BundlePatchProposal, MigrationBundleContext
 from models.file_bundle_execution import (
     FileBundleExecutionContext,
     FilePatchProposal,
 )
-from models.patch_proposal import PatchProposal
 
 DEFAULT_BASE_URL = "https://aihubmix.com/v1"
 DEFAULT_MODEL_NAME = "gemini-3.6-flash-free"
@@ -66,108 +63,6 @@ class AiHubMixModelClient:
     @property
     def model_name(self) -> str:
         return self._model_name
-
-    def generate_patch(
-        self,
-        context: MigrationTaskContext,
-        prompt: str,
-    ) -> PatchProposal:
-        del context
-        try:
-            response = self._client.chat.completions.create(
-                model=self._model_name,
-                messages=[{"role": "user", "content": prompt}],
-                response_format={
-                    "type": "json_schema",
-                    "json_schema": {
-                        "name": "patch_proposal",
-                        "strict": True,
-                        "schema": PatchProposal.model_json_schema(),
-                    },
-                },
-                temperature=0,
-            )
-            message = response.choices[0].message
-            refusal = getattr(message, "refusal", None)
-            if refusal:
-                raise ModelInvocationError(
-                    "generate_patch",
-                    f"AiHubMix model refused the request: {refusal}",
-                    diagnostics={"model": self._model_name},
-                )
-            content = message.content
-            if not isinstance(content, str) or not content.strip():
-                raise ModelInvocationError(
-                    "generate_patch",
-                    "AiHubMix returned an empty structured response",
-                    diagnostics={"model": self._model_name},
-                )
-            return PatchProposal.model_validate_json(content)
-        except ModelInvocationError:
-            raise
-        except (ValidationError, ValueError, TypeError, AttributeError) as error:
-            raise ModelInvocationError(
-                "generate_patch",
-                f"AiHubMix returned an invalid structured PatchProposal: {error}",
-                diagnostics={"model": self._model_name},
-            ) from error
-        except Exception as error:
-            raise ModelInvocationError(
-                "generate_patch",
-                f"AiHubMix request failed: {error}",
-                diagnostics={"model": self._model_name},
-            ) from error
-
-    def generate_bundle_patch(
-        self,
-        context: MigrationBundleContext,
-        prompt: str,
-    ) -> BundlePatchProposal:
-        del context
-        try:
-            response = self._client.chat.completions.create(
-                model=self._model_name,
-                messages=[{"role": "user", "content": prompt}],
-                response_format={
-                    "type": "json_schema",
-                    "json_schema": {
-                        "name": "bundle_patch_proposal",
-                        "strict": True,
-                        "schema": BundlePatchProposal.model_json_schema(),
-                    },
-                },
-                temperature=0,
-            )
-            message = response.choices[0].message
-            refusal = getattr(message, "refusal", None)
-            if refusal:
-                raise ModelInvocationError(
-                    "generate_bundle_patch",
-                    f"model refused the request: {refusal}",
-                    diagnostics={"model": self._model_name},
-                )
-            content = message.content
-            if not isinstance(content, str) or not content.strip():
-                raise ModelInvocationError(
-                    "generate_bundle_patch",
-                    "model returned an empty structured response",
-                    diagnostics={"model": self._model_name},
-                )
-            return BundlePatchProposal.model_validate_json(content)
-        except ModelInvocationError:
-            raise
-        except (ValidationError, ValueError, TypeError, AttributeError) as error:
-            raise ModelInvocationError(
-                "generate_bundle_patch",
-                f"model returned an invalid BundlePatchProposal: {error}",
-                diagnostics={"model": self._model_name},
-            ) from error
-        except Exception as error:
-            raise ModelInvocationError(
-                "generate_bundle_patch",
-                f"bundle patch request failed: {error}",
-                diagnostics={"model": self._model_name},
-            ) from error
 
     def generate_file_bundle_patch(
         self,

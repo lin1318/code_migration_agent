@@ -6,11 +6,7 @@ from typing import TextIO
 from langgraph.checkpoint.memory import InMemorySaver
 from pydantic import BaseModel
 
-from agent.bundle_cli import add_bundle_commands, run_bundle_command
-from agent.dependency_cli import add_dependency_commands, run_dependency_command
-from agent.patch_cli import add_patch_commands, run_patch_command
 from agent.migration_cli import add_migration_commands, run_migration_command
-from agent.validation_cli import add_validation_commands, run_validation_command
 from knowledge.registry import RuleRegistryError
 from models.inspection import RepositoryInspection
 from models.workflow import WorkflowState
@@ -71,10 +67,6 @@ def main(
         action="store_true",
         help="enable an in-memory checkpointer for this process",
     )
-    add_patch_commands(commands)
-    add_dependency_commands(commands)
-    add_bundle_commands(commands)
-    add_validation_commands(commands)
     add_migration_commands(commands)
     args = parser.parse_args(argv)
 
@@ -82,14 +74,6 @@ def main(
         return _run_inspect(args, stdout, stderr)
     if args.command == "workflow" and args.workflow_command == "inspect":
         return _run_workflow_inspect(args, stdout, stderr)
-    if args.command == "patch" and args.patch_command == "generate":
-        return run_patch_command(args, stdout, stderr)
-    if args.command == "dependency" and args.dependency_command == "resolve":
-        return run_dependency_command(args, stdout, stderr)
-    if args.command == "bundle":
-        return run_bundle_command(args, stdout, stderr)
-    if args.command == "validate":
-        return run_validation_command(args, stdout, stderr)
     if args.command == "migrate":
         return run_migration_command(args, stdout, stderr)
     parser.error(f"unknown command: {args.command}")
