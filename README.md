@@ -55,6 +55,12 @@ python -m agent migrate files \
   --validation-timeout 300
 ```
 
+The command is managed by a LangGraph state workflow covering input validation,
+repository inspection, rule loading, file classification, planning, ordered
+bundle execution, repository validation, reporting, and structured failure
+routing. Add `--checkpoint-memory --thread-id <id>` to retain checkpoints for
+the current process while debugging or testing the graph.
+
 Configure the AiHubMix OpenAI-compatible Gemini endpoint with
 `AIHUBMIX_API_KEY`. `PATCH_MODEL_PROVIDER` defaults to `aihubmix`,
 `PATCH_MODEL_NAME` defaults to `gemini-3.6-flash-free`, and

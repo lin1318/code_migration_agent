@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import TextIO
 from uuid import uuid4
 
+from langgraph.checkpoint.memory import InMemorySaver
+
 from agent.file_migration_workflow import migrate_files
 from llm.factory import create_file_bundle_model_client
 from models.file_migration_validation import FileMigrationWorkflowStatus
@@ -49,6 +51,16 @@ def add_migration_commands(commands) -> None:
         default=300.0,
     )
     files.add_argument("--allow-dirty", action="store_true")
+    files.add_argument(
+        "--checkpoint-memory",
+        action="store_true",
+        help="save graph checkpoints in memory for this process",
+    )
+    files.add_argument(
+        "--thread-id",
+        default="workflow-migrate-files",
+        help="LangGraph checkpoint thread identifier",
+    )
 
 
 def run_migration_command(
@@ -84,6 +96,8 @@ def _run_file_migration_command(
             validation_timeout=args.validation_timeout,
             allow_dirty=args.allow_dirty,
             rule_path=args.rules,
+            checkpointer=(InMemorySaver() if args.checkpoint_memory else None),
+            thread_id=args.thread_id,
         )
     except (OSError, ValueError, RuntimeError) as error:
         print(f"error: {type(error).__name__}: {error}", file=stderr)
@@ -107,6 +121,10 @@ def _run_file_migration_command(
     print(f"Blocked files: {blocked}", file=stdout)
     print(f"Failed files: {failed}", file=stdout)
     print(f"Migration status: {workflow.status.value}", file=stdout)
+    print(
+        "LangGraph stages: " + ", ".join(workflow.completed_stages),
+        file=stdout,
+    )
     print(
         f"Failed bundle: {execution.failed_bundle_id or 'none'}",
         file=stdout,

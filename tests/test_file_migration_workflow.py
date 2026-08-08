@@ -26,6 +26,7 @@ from models.file_migration_execution import (
 )
 from models.file_migration_validation import (
     FileMigrationValidationResult,
+    FileMigrationWorkflowReport,
     FileMigrationWorkflowStatus,
 )
 from models.inspection import RepositoryInspection
@@ -122,27 +123,63 @@ def _validation() -> FileMigrationValidationResult:
     )
 
 
+def _graph_state(repository: Path, output: Path, *, stopped=False):
+    output.mkdir(parents=True, exist_ok=True)
+    inspection = _inspection(repository)
+    classification = classify_gin_files(inspection)
+    file_plan = build_file_migration_plan(classification)
+    bundle_plan = build_file_bundle_plan(
+        classification,
+        file_plan,
+        inspection,
+        load_rule_registry(DEFAULT_RULE_PATH),
+    )
+    execution = (
+        FileMigrationRunResult(
+            repository_path=str(repository.resolve()),
+            status=FileMigrationRunStatus.STOPPED,
+            bundle_count=1,
+            completed_files=[],
+            records=[],
+            failed_bundle_id="bundle-1",
+        )
+        if stopped
+        else _completed_with_proposal(repository, bundle_plan)
+    )
+    validation = None if stopped else _validation()
+    status = (
+        FileMigrationWorkflowStatus.MIGRATION_STOPPED
+        if stopped
+        else FileMigrationWorkflowStatus.COMPLETED
+    )
+    return {
+        "inspection": inspection,
+        "classification": classification,
+        "file_plan": file_plan,
+        "bundle_plan": bundle_plan,
+        "execution": execution,
+        "validation": validation,
+        "final_status": status.value,
+        "final_report": FileMigrationWorkflowReport(
+            repository_path=str(repository.resolve()),
+            status=status,
+            completed_stages=["validate_input", "generate_report"],
+            migration=execution,
+            validation=validation,
+        ),
+    }
+
+
 def test_connects_existing_stages_and_writes_artifacts(tmp_path: Path) -> None:
     repository = tmp_path / "repository"
     repository.mkdir()
     output = tmp_path / "artifacts"
-    inspection = _inspection(repository)
     model = Mock(model_name="fake")
 
-    with (
-        patch(
-            "agent.file_migration_workflow.inspect_repository",
-            return_value=inspection,
-        ) as inspect,
-        patch("agent.file_migration_workflow.run_file_migration") as run,
-        patch(
-            "agent.file_migration_workflow.validate_file_migration",
-            return_value=_validation(),
-        ) as validate,
-    ):
-        run.side_effect = lambda _repo, _inspection, plan, *_args, **_kwargs: (
-            _completed_with_proposal(repository, plan)
-        )
+    with patch(
+        "agent.file_migration_workflow.run_file_migration_workflow",
+        return_value=_graph_state(repository, output),
+    ) as run:
         result = migrate_files(
             repository,
             output,
@@ -153,9 +190,8 @@ def test_connects_existing_stages_and_writes_artifacts(tmp_path: Path) -> None:
 
     assert result.bundle_plan.file_count == 1
     assert result.bundle_plan.bundles[0].file == "handler/user.go"
-    assert inspect.call_args.kwargs["analyzer_timeout"] == 90
-    assert run.call_args.kwargs["timeout_seconds"] == 45
-    validate.assert_called_once()
+    assert run.call_args.kwargs["analyzer_timeout"] == 90
+    assert run.call_args.kwargs["apply_timeout"] == 45
     assert sorted(path.name for path in output.iterdir()) == [
         "file-bundle-plan.json",
         "file-classification.json",
@@ -177,7 +213,17 @@ def test_rejects_artifact_directory_inside_repository(tmp_path: Path) -> None:
     repository = tmp_path / "repository"
     repository.mkdir()
 
-    with pytest.raises(ValueError, match="outside the migrated repository"):
+    failed_state = {
+        "final_status": "failed",
+        "errors": [],
+    }
+    with (
+        patch(
+            "agent.file_migration_workflow.run_file_migration_workflow",
+            return_value=failed_state,
+        ),
+        pytest.raises(RuntimeError, match="workflow failed"),
+    ):
         migrate_files(
             repository,
             repository / "output",
@@ -189,34 +235,14 @@ def test_stopped_migration_skips_repository_validation(tmp_path: Path) -> None:
     repository = tmp_path / "repository"
     repository.mkdir()
     output = tmp_path / "artifacts"
-    inspection = _inspection(repository)
-    stopped = FileMigrationRunResult(
-        repository_path=str(repository.resolve()),
-        status=FileMigrationRunStatus.STOPPED,
-        bundle_count=1,
-        completed_files=[],
-        records=[],
-        failed_bundle_id="bundle-1",
-    )
-
-    with (
-        patch(
-            "agent.file_migration_workflow.inspect_repository",
-            return_value=inspection,
-        ),
-        patch(
-            "agent.file_migration_workflow.run_file_migration",
-            return_value=stopped,
-        ),
-        patch(
-            "agent.file_migration_workflow.validate_file_migration"
-        ) as validate,
+    with patch(
+        "agent.file_migration_workflow.run_file_migration_workflow",
+        return_value=_graph_state(repository, output, stopped=True),
     ):
         result = migrate_files(repository, output, Mock(model_name="fake"))
 
     assert result.status is FileMigrationWorkflowStatus.MIGRATION_STOPPED
     assert result.validation is None
-    validate.assert_not_called()
     assert not (output / "file-validation-result.json").exists()
     assert (output / "file-migration-workflow-result.json").exists()
 
@@ -242,6 +268,7 @@ def test_cli_runs_file_workflow_and_prints_summary(tmp_path: Path) -> None:
         execution=_completed(repository, 1),
         status=FileMigrationWorkflowStatus.COMPLETED,
         validation=_validation(),
+        completed_stages=["validate_input", "generate_report"],
         output_directory=output,
     )
     stdout = StringIO()

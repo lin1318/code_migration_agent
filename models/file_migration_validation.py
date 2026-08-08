@@ -25,5 +25,6 @@ class FileMigrationValidationResult(PlanModel):
 class FileMigrationWorkflowReport(PlanModel):
     repository_path: str
     status: FileMigrationWorkflowStatus
+    completed_stages: list[str]
     migration: FileMigrationRunResult
     validation: FileMigrationValidationResult | None

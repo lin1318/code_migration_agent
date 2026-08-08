@@ -5,30 +5,21 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from langgraph.checkpoint.base import BaseCheckpointSaver
 from pydantic import BaseModel
 
 from agent.file_bundle_execution import FileBundleModelClient
-from agent.file_bundle_runner import run_file_migration
-from knowledge.registry import load_rule_registry
 from models.file_bundles import FileBundlePlan
 from models.file_classification import GinFileClassification
-from models.file_migration_execution import (
-    FileBundleRunStatus,
-    FileMigrationRunResult,
-    FileMigrationRunStatus,
-)
+from models.file_migration_execution import FileMigrationRunResult
 from models.file_migration_validation import (
     FileMigrationValidationResult,
-    FileMigrationWorkflowReport,
     FileMigrationWorkflowStatus,
 )
 from models.file_migration_plan import FileMigrationPlan
 from models.inspection import RepositoryInspection
-from tools.file_bundle_planner import build_file_bundle_plan
-from tools.file_classifier import classify_gin_files
-from tools.file_migration_planner import build_file_migration_plan
-from tools.inspection import DEFAULT_RULE_PATH, inspect_repository
-from tools.file_migration_validation import validate_file_migration
+from tools.inspection import DEFAULT_RULE_PATH
+from workflow.file_service import run_file_migration_workflow
 
 
 @dataclass(frozen=True)
@@ -40,6 +31,7 @@ class FileMigrationWorkflowResult:
     execution: FileMigrationRunResult
     status: FileMigrationWorkflowStatus
     validation: FileMigrationValidationResult | None
+    completed_stages: list[str]
     output_directory: Path
 
 
@@ -53,43 +45,47 @@ def migrate_files(
     validation_timeout: float = 300.0,
     allow_dirty: bool = False,
     rule_path: str | Path = DEFAULT_RULE_PATH,
+    checkpointer: BaseCheckpointSaver | None = None,
+    thread_id: str = "workflow-migrate-files",
 ) -> FileMigrationWorkflowResult:
-    """Connect Stages 1-5 and persist their deterministic artifacts."""
+    """Run and persist the LangGraph-managed file migration workflow."""
 
     repository_path = Path(repository).expanduser().resolve()
     output_path = Path(output_directory).expanduser().resolve()
-    _validate_output_directory(repository_path, output_path)
-
-    inspection = inspect_repository(
+    state = run_file_migration_workflow(
         repository_path,
+        output_path,
+        rule_path,
+        model_client,
         analyzer_timeout=analyzer_timeout,
-        rule_path=rule_path,
+        apply_timeout=apply_timeout,
+        validation_timeout=validation_timeout,
+        allow_dirty=allow_dirty,
+        checkpointer=checkpointer,
+        thread_id=thread_id,
     )
-    registry = load_rule_registry(rule_path)
-    classification = classify_gin_files(inspection)
-    file_plan = build_file_migration_plan(classification)
-    bundle_plan = build_file_bundle_plan(
-        classification,
-        file_plan,
-        inspection,
-        registry,
-    )
+    if state.get("final_status") == "failed":
+        errors = state.get("errors", [])
+        detail = errors[-1] if errors else None
+        message = (
+            f"{detail.stage}: {detail.error_type}: {detail.message}"
+            if detail is not None
+            else "file migration workflow failed"
+        )
+        raise RuntimeError(message)
+    inspection = state["inspection"]
+    classification = state["classification"]
+    file_plan = state["file_plan"]
+    bundle_plan = state["bundle_plan"]
+    execution = state["execution"]
+    validation = state.get("validation")
+    report = state["final_report"]
 
-    output_path.mkdir(parents=True, exist_ok=False)
     _write_json(output_path / "inspection.json", inspection)
     _write_json(output_path / "file-classification.json", classification)
     _write_json(output_path / "file-migration-plan.json", file_plan)
     _write_json(output_path / "file-bundle-plan.json", bundle_plan)
 
-    execution = run_file_migration(
-        repository_path,
-        inspection,
-        bundle_plan,
-        registry,
-        model_client,
-        allow_dirty=allow_dirty,
-        timeout_seconds=apply_timeout,
-    )
     proposals = output_path / "proposals"
     proposals.mkdir()
     for record in execution.records:
@@ -99,29 +95,11 @@ def migrate_files(
                 record.execution.proposal,
             )
     _write_json(output_path / "file-migration-result.json", execution)
-    validation = None
-    status = FileMigrationWorkflowStatus.MIGRATION_STOPPED
-    if execution.status is FileMigrationRunStatus.COMPLETED:
-        changed_files = [
-            record.file
-            for record in execution.records
-            if record.status is FileBundleRunStatus.APPLIED
-        ]
-        validation = validate_file_migration(
-            repository_path,
-            changed_files,
-            timeout_seconds=validation_timeout,
-        )
-        status = validation.status
+    if validation is not None:
         _write_json(output_path / "file-validation-result.json", validation)
     _write_json(
         output_path / "file-migration-workflow-result.json",
-        FileMigrationWorkflowReport(
-            repository_path=str(repository_path),
-            status=status,
-            migration=execution,
-            validation=validation,
-        ),
+        report,
     )
     return FileMigrationWorkflowResult(
         inspection=inspection,
@@ -129,19 +107,11 @@ def migrate_files(
         file_plan=file_plan,
         bundle_plan=bundle_plan,
         execution=execution,
-        status=status,
+        status=report.status,
         validation=validation,
+        completed_stages=state.get("completed_stages", []),
         output_directory=output_path,
     )
-
-
-def _validate_output_directory(repository: Path, output: Path) -> None:
-    if output.exists():
-        raise ValueError(f"output directory already exists: {output}")
-    if output == repository or repository in output.parents:
-        raise ValueError(
-            "output directory must be outside the migrated repository"
-        )
 
 
 def _write_json(path: Path, model: BaseModel) -> None:
