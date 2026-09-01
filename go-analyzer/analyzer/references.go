@@ -16,36 +16,76 @@ func findReferences(root string, pkg *packages.Package) []Reference {
 	var references []Reference
 	for _, file := range pkg.Syntax {
 		ast.Inspect(file, func(node ast.Node) bool {
-			call, ok := node.(*ast.CallExpr)
-			if !ok {
-				return true
-			}
-			enclosing := enclosingFunction(file, call.Pos(), pkg.TypesInfo)
-			if reference := referenceForExpr(
-				root, pkg, call.Fun, enclosing, modules,
-			); reference.Symbol != "" {
-				references = append(references, reference)
-			}
-			for _, argument := range call.Args {
-				switch argument := argument.(type) {
-				case *ast.Ident:
-					if reference := referenceForExpr(
-						root, pkg, argument, enclosing, modules,
-					); reference.Symbol != "" {
-						references = append(references, reference)
+			switch node := node.(type) {
+			case *ast.CallExpr:
+				enclosing := enclosingFunction(file, node.Pos(), pkg.TypesInfo)
+				if reference := referenceForExpr(
+					root, pkg, node.Fun, enclosing, modules,
+				); reference.Symbol != "" {
+					references = append(references, reference)
+				}
+				for _, argument := range node.Args {
+					switch argument := argument.(type) {
+					case *ast.Ident:
+						if reference := referenceForExpr(
+							root, pkg, argument, enclosing, modules,
+						); reference.Symbol != "" {
+							references = append(references, reference)
+						}
+					case *ast.SelectorExpr:
+						if reference := referenceForExpr(
+							root, pkg, argument, enclosing, modules,
+						); reference.Symbol != "" {
+							references = append(references, reference)
+						}
 					}
-				case *ast.SelectorExpr:
-					if reference := referenceForExpr(
-						root, pkg, argument, enclosing, modules,
-					); reference.Symbol != "" {
-						references = append(references, reference)
-					}
+				}
+			case *ast.CompositeLit:
+				enclosing := enclosingFunction(file, node.Pos(), pkg.TypesInfo)
+				if reference := referenceForTypeExpr(
+					root, pkg, node.Type, enclosing, modules,
+				); reference.Symbol != "" {
+					references = append(references, reference)
 				}
 			}
 			return true
 		})
 	}
 	return deduplicateReferences(references)
+}
+
+func referenceForTypeExpr(
+	root string,
+	pkg *packages.Package,
+	expression ast.Expr,
+	enclosing string,
+	modules map[string]string,
+) Reference {
+	position := pkg.Fset.Position(expression.Pos())
+	object, _ := referencedObject(pkg.TypesInfo, expression)
+	typeName, ok := object.(*types.TypeName)
+	if !ok || typeName.Pkg() == nil {
+		return Reference{}
+	}
+	packagePath := typeName.Pkg().Path()
+	reference := Reference{
+		File:            relativeFile(root, position.Filename),
+		Line:            position.Line,
+		Column:          position.Column,
+		EnclosingSymbol: enclosing,
+		Symbol:          packagePath + "." + typeName.Name(),
+		PackagePath:     packagePath,
+		ModulePath:      modules[packagePath],
+		Signature:       types.TypeString(typeName.Type(), packageQualifier),
+		StandardLibrary: !strings.Contains(packagePath, "."),
+		Resolved:        true,
+	}
+	definition := pkg.Fset.Position(typeName.Pos())
+	if definition.IsValid() {
+		reference.DefinitionFile = relativeFile(root, definition.Filename)
+		reference.DefinitionLine = definition.Line
+	}
+	return reference
 }
 
 func referenceForExpr(

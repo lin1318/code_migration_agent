@@ -36,7 +36,7 @@ def test_loads_production_rules_and_performs_exact_lookup() -> None:
 
     registry = load_rule_registry(knowledge)
 
-    assert len(registry) == 35
+    assert len(registry) == 36
     rule = registry.lookup("github.com/gin-gonic/gin", "(*Context).JSON")
     assert rule is not None
     assert rule.rule_id == "gin.context.json"
@@ -71,20 +71,29 @@ def test_loads_production_rules_and_performs_exact_lookup() -> None:
     listen = registry.lookup("net/http", "(*Server).ListenAndServe")
     assert listen is not None
     assert listen.rule_id == "net-http.server.listen-and-serve-to-hertz"
-    assert [item.operation for item in listen.target_operations or []] == [
-        "remove_http_server_wrapper",
-        "configure_hertz_constructor",
-        "configure_read_timeout",
-        "configure_write_timeout",
-        "configure_max_header_bytes",
-        "start_hertz",
+    assert listen.target_symbol == "(*Hertz).Spin"
+    assert listen.confidence is MigrationConfidence.EXACT
+    assert "Do not pass constructor options to Spin" in listen.notes
+
+    server_constructor = registry.lookup("net/http", "Server")
+    assert server_constructor is not None
+    assert server_constructor.rule_id == "net-http.server-to-hertz-constructor"
+    constructor_operations = server_constructor.target_operations or []
+    assert [item.operation for item in constructor_operations] == [
+        "replace_server_constructor",
+        "map_server_field_to_option",
+        "map_server_field_to_option",
+        "map_server_field_to_option",
+        "map_server_field_to_option",
+        "register_routes_on_hertz_engine",
     ]
-    constructor_operations = listen.target_operations or []
-    for operation in constructor_operations[1:5]:
-        assert "server.New or server.Default" in (operation.notes or "")
-    assert "specific factory function name" in (
-        constructor_operations[1].notes or ""
-    )
+    assert [item.value for item in constructor_operations[1:5]] == [
+        "Addr",
+        "ReadTimeout",
+        "WriteTimeout",
+        "MaxHeaderBytes",
+    ]
+    assert constructor_operations[5].value == "Handler"
 
     gin_new = registry.lookup("github.com/gin-gonic/gin", "New")
     assert gin_new is not None

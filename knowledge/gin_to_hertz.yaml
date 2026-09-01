@@ -195,34 +195,50 @@ rules:
     required_imports: []
     notes: Delete the Gin mode configuration call and remove the Gin import if no other Gin symbols remain.
 
-  - rule_id: net-http.server.listen-and-serve-to-hertz
+  - rule_id: net-http.server-to-hertz-constructor
     source_package: net/http
-    source_symbol: (*Server).ListenAndServe
+    source_symbol: Server
     target_package: github.com/cloudwego/hertz/pkg/app/server
     target_operations:
-      - operation: remove_http_server_wrapper
-        symbol: net/http.Server
-        notes: Remove the net/http.Server composite literal; a Hertz engine is not installed as an http.Handler.
-      - operation: configure_hertz_constructor
+      - operation: replace_server_constructor
+        symbol: github.com/cloudwego/hertz/pkg/app/server.New
+        notes: Replace the net/http.Server composite literal with a Hertz engine constructor. Use server.Default instead when preserving default middleware is required by the surrounding migration.
+      - operation: map_server_field_to_option
         symbol: github.com/cloudwego/hertz/pkg/app/server.WithHostPorts
-        notes: Apply server.WithHostPorts(endPoint) to the server.New or server.Default call that constructs the Hertz engine. If construction is delegated to a project-defined factory, pass the option through without assuming a specific factory function name.
-      - operation: configure_read_timeout
+        value: Addr
+        notes: Map the net/http.Server Addr field to server.WithHostPorts in the server.New or server.Default call.
+      - operation: map_server_field_to_option
         symbol: github.com/cloudwego/hertz/pkg/app/server.WithReadTimeout
-        notes: Preserve readTimeout with server.WithReadTimeout in the same server.New or server.Default constructor call.
-      - operation: configure_write_timeout
+        value: ReadTimeout
+        notes: Map the net/http.Server ReadTimeout field to server.WithReadTimeout in the constructor call.
+      - operation: map_server_field_to_option
         symbol: github.com/cloudwego/hertz/pkg/app/server.WithWriteTimeout
-        notes: Preserve writeTimeout with server.WithWriteTimeout in the same server.New or server.Default constructor call.
-      - operation: configure_max_header_bytes
+        value: WriteTimeout
+        notes: Map the net/http.Server WriteTimeout field to server.WithWriteTimeout in the constructor call.
+      - operation: map_server_field_to_option
         symbol: github.com/cloudwego/hertz/pkg/app/server.WithMaxHeaderBytes
-        notes: Preserve maxHeaderBytes with server.WithMaxHeaderBytes in the same server.New or server.Default constructor call.
-      - operation: start_hertz
-        symbol: github.com/cloudwego/hertz/pkg/app/server.(*Hertz).Spin
-        notes: Start the configured Hertz engine with Spin().
+        value: MaxHeaderBytes
+        notes: Map the net/http.Server MaxHeaderBytes field to server.WithMaxHeaderBytes in the constructor call.
+      - operation: register_routes_on_hertz_engine
+        value: Handler
+        notes: Do not convert the net/http.Server Handler field into a constructor option. Register the original routes and middleware directly on the constructed Hertz engine, using the project's existing routing structure without assuming a function name.
     migration_category: server_initialization
     confidence: review
     required_imports:
       - github.com/cloudwego/hertz/pkg/app/server
-    notes: Replace net/http.Server configuration and ListenAndServe with Hertz constructor options and Spin while preserving address, read timeout, write timeout, and maximum header bytes.
+    notes: Replace net/http.Server construction with Hertz engine construction. Convert supported server fields into constructor options and migrate Handler ownership into explicit Hertz route registration.
+    documentation_notes: https://www.cloudwego.io/zh/docs/hertz/tutorials/basic-feature/engine/
+
+  - rule_id: net-http.server.listen-and-serve-to-hertz
+    source_package: net/http
+    source_symbol: (*Server).ListenAndServe
+    target_package: github.com/cloudwego/hertz/pkg/app/server
+    target_symbol: (*Hertz).Spin
+    migration_category: server_initialization
+    confidence: exact
+    required_imports:
+      - github.com/cloudwego/hertz/pkg/app/server
+    notes: Replace ListenAndServe with Spin after the Hertz engine has been constructed and its routes registered. Do not pass constructor options to Spin.
     documentation_notes: https://www.cloudwego.io/zh/docs/hertz/tutorials/basic-feature/engine/
 
   - rule_id: gin.engine.get

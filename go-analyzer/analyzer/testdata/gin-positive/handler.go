@@ -18,6 +18,11 @@ func standalone(request *http.Request) {
 	request.FormFile("upload")
 }
 
+func startServer(handler http.Handler) error {
+	server := &http.Server{Addr: ":8080", Handler: handler}
+	return server.ListenAndServe()
+}
+
 func routes() {
 	first := gin.Default()
 	second := gin.New()

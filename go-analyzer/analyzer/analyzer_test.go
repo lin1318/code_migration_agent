@@ -110,6 +110,20 @@ func TestAnalyzeDistinguishesDirectGinRequestReceiverChain(t *testing.T) {
 	}
 }
 
+func TestAnalyzeReturnsNamedCompositeLiteralReferences(t *testing.T) {
+	result := Analyze(fixturePath(t, "gin-positive"))
+
+	for _, reference := range result.References {
+		if reference.Symbol == "net/http.Server" {
+			if !reference.Resolved || !reference.StandardLibrary {
+				t.Errorf("reference = %#v, want resolved standard-library type", reference)
+			}
+			return
+		}
+	}
+	t.Fatalf("net/http.Server reference not found in %#v", result.References)
+}
+
 func TestAnalyzeInvalidGoCodeReturnsStructuredErrors(t *testing.T) {
 	result := Analyze(fixturePath(t, "invalid"))
 
