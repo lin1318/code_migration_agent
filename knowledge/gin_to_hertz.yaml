@@ -174,7 +174,7 @@ rules:
         notes: Replace gin.New() with server.New(opts...).
       - operation: expose_server_options_from_factory
         symbol: github.com/cloudwego/hertz/pkg/common/config.Option
-        notes: When construction occurs in a router factory called by main, accept opts ...config.Option in that factory and forward opts... to server.New so bootstrap configuration is preserved.
+        notes: If Hertz engine construction is delegated to a project-defined factory, accept opts ...config.Option and forward opts... to the actual server.New call; do not assume a specific factory function name.
     migration_category: server_initialization
     confidence: review
     required_imports:
@@ -205,16 +205,16 @@ rules:
         notes: Remove the net/http.Server composite literal; a Hertz engine is not installed as an http.Handler.
       - operation: configure_hertz_constructor
         symbol: github.com/cloudwego/hertz/pkg/app/server.WithHostPorts
-        notes: Pass endPoint through server.WithHostPorts when calling the router factory that constructs the Hertz engine.
+        notes: Apply server.WithHostPorts(endPoint) to the server.New or server.Default call that constructs the Hertz engine. If construction is delegated to a project-defined factory, pass the option through without assuming a specific factory function name.
       - operation: configure_read_timeout
         symbol: github.com/cloudwego/hertz/pkg/app/server.WithReadTimeout
-        notes: Preserve readTimeout with server.WithReadTimeout.
+        notes: Preserve readTimeout with server.WithReadTimeout in the same server.New or server.Default constructor call.
       - operation: configure_write_timeout
         symbol: github.com/cloudwego/hertz/pkg/app/server.WithWriteTimeout
-        notes: Preserve writeTimeout with server.WithWriteTimeout.
+        notes: Preserve writeTimeout with server.WithWriteTimeout in the same server.New or server.Default constructor call.
       - operation: configure_max_header_bytes
         symbol: github.com/cloudwego/hertz/pkg/app/server.WithMaxHeaderBytes
-        notes: Preserve maxHeaderBytes with server.WithMaxHeaderBytes.
+        notes: Preserve maxHeaderBytes with server.WithMaxHeaderBytes in the same server.New or server.Default constructor call.
       - operation: start_hertz
         symbol: github.com/cloudwego/hertz/pkg/app/server.(*Hertz).Spin
         notes: Start the configured Hertz engine with Spin().

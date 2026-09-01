@@ -79,6 +79,12 @@ def test_loads_production_rules_and_performs_exact_lookup() -> None:
         "configure_max_header_bytes",
         "start_hertz",
     ]
+    constructor_operations = listen.target_operations or []
+    for operation in constructor_operations[1:5]:
+        assert "server.New or server.Default" in (operation.notes or "")
+    assert "specific factory function name" in (
+        constructor_operations[1].notes or ""
+    )
 
     gin_new = registry.lookup("github.com/gin-gonic/gin", "New")
     assert gin_new is not None
@@ -86,6 +92,9 @@ def test_loads_production_rules_and_performs_exact_lookup() -> None:
     assert "github.com/cloudwego/hertz/pkg/app/server/config" not in (
         gin_new.required_imports
     )
+    factory_operation = (gin_new.target_operations or [])[1]
+    assert "actual server.New call" in (factory_operation.notes or "")
+    assert "specific factory function name" in (factory_operation.notes or "")
 
     swagger = registry.lookup("github.com/swaggo/gin-swagger", "WrapHandler")
     assert swagger is not None
